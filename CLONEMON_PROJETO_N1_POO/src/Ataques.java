@@ -4,7 +4,7 @@ public class Ataques {
     private Elementos tipo;
 	private int dano;
 	
-	public Ataques(String nome,Elementos tipo, int dano){
+	public Ataques(String nome, Elementos tipo, int dano){
 		
 		this.nome = nome;
         this.tipo = tipo;

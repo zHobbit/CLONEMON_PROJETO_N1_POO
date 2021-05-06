@@ -1,13 +1,15 @@
 
+
 public class Player extends MecanicaJogo {
 
-	public int monstrosPlayer[];
 	
-	Monstros monstro[];
+	public int[] monstrosPlayer = new int [3];
+	
+	public Monstros[] monstroEquipe = new Monstros [3];
 	
 	public void PrintEquipe() {
 		
-		System.out.println("\nOs clonemons escolhidos foram:" + monstro[0] + "\n" + monstro[1] + "\n" + monstro[2]);
+		System.out.println("\nOs CLONEMONS escolhidos foram: " + monstroEquipe[0] + " " + monstroEquipe[1] + " " + monstroEquipe[2]);
 		
 	}
 	
@@ -18,27 +20,27 @@ public class Player extends MecanicaJogo {
 			switch (monstrosPlayer[i]) {
 			
 				case 1 : {
-					Player.this.monstro[i] = MecanicaJogo.lindoya;
+					Player.this.monstroEquipe[i] = MecanicaJogo.lindoya;
 					break;
 				}			
 				case 2 : {
-					Player.this.monstro[i] = MecanicaJogo.coiso;
+					Player.this.monstroEquipe[i] = MecanicaJogo.coiso;
 					break;
 				}			
 				case 3 : {
-					Player.this.monstro[i] = MecanicaJogo.lucifer;
+					Player.this.monstroEquipe[i] = MecanicaJogo.lucifer;
 					break;
 				}			
 				case 4 : {
-					Player.this.monstro[i] = MecanicaJogo.gelado;
+					Player.this.monstroEquipe[i] = MecanicaJogo.gelado;
 					break;
 				}			
 				case 5 : {
-					Player.this.monstro[i] = MecanicaJogo.groot;
+					Player.this.monstroEquipe[i] = MecanicaJogo.groot;
 					break;
 				}			
 				case 6 : {
-					Player.this.monstro[i] = MecanicaJogo.eletroPaulo;
+					Player.this.monstroEquipe[i] = MecanicaJogo.eletroPaulo;
 					break;
 				}	
 			}
@@ -48,7 +50,7 @@ public class Player extends MecanicaJogo {
 	
 	public boolean TemMonstros() {
 		
-		if (monstro[0].EstaVivo() == false && monstro[1].EstaVivo() == false  && monstro[2].EstaVivo() == false) {
+		if (monstroEquipe[0].EstaVivo() == false && monstroEquipe[1].EstaVivo() == false  && monstroEquipe[2].EstaVivo() == false) {
 			
 			return false;
 			

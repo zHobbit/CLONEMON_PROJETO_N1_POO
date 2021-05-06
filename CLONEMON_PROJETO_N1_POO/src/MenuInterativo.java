@@ -14,6 +14,7 @@ public class MenuInterativo {
 		System.out.println("\n3 - Sair do jogo");
 		System.out.println("\n\nResposta:");
 		respUsuario = entrada.nextInt();
+
 		
 		switch (respUsuario) {
 		

@@ -10,7 +10,7 @@ public class MecanicaJogo {
     static Ataques fogoBabilonia = new Ataques("Fogo na Babilonia", Elementos.FOGO, 10);
     static Ataques cuboGelo = new Ataques("Cubo de Gelo", Elementos.GELO, 5);
     static Ataques ficaFrio = new Ataques("Fica frio ai", Elementos.GELO, 10);
-    static  Ataques papel = new Ataques("Corte de papel A4", Elementos.GRAMA, 5);
+    static Ataques papel = new Ataques("Corte de papel A4", Elementos.GRAMA, 5);
     static Ataques cartolinada = new Ataques("Cartolinada", Elementos.GRAMA, 10);
     static Ataques volt = new Ataques("Volt", Elementos.RAIO, 5);
     static Ataques bivolt = new Ataques("Bivolt", Elementos.RAIO, 10);
@@ -26,20 +26,22 @@ public class MecanicaJogo {
 		
 		Player player1 = new Player();
 		Scanner escolhaClonemon = new Scanner(System.in);
+		int indice = 1;
 		
 		System.out.println("\n\n\nVamos comecar!");
 		
 		for(int i = 0;i < 3;i++) {
-		System.out.println("\nEscolha seu "+ i+1 + "th clonemon :");
+		System.out.println("\nEscolha seu "+ indice + "th clonemon:\n");
 		lindoya.PrintMonstro();
 		coiso.PrintMonstro();
 		lucifer.PrintMonstro();
 		gelado.PrintMonstro();
 		groot.PrintMonstro();
 		eletroPaulo.PrintMonstro();
-		System.out.println("\n\nDigite o ID do clonemon que deseja escolher para sua equipe:");
+		System.out.println("\n\nDigite o ID do CLONEMON que deseja escolher para sua equipe:");
 		player1.monstrosPlayer[i] = escolhaClonemon.nextInt();
-		
+		indice++;
+
 		}
 		
 		player1.ConverteID();

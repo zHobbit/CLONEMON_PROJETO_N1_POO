@@ -22,37 +22,84 @@ public class MecanicaJogo {
     static Monstros groot = new Monstros(5, "Groot", Elementos.GRAMA, 120, 35, 15, 30, papel, cartolinada);
     static Monstros eletroPaulo = new Monstros(6, "EletroPaulo", Elementos.RAIO, 100, 25, 20, 55, volt, bivolt);
     
-	public void PartidaBot() {
+	
+	public void NovaPartida() {
 		
 		Player player1 = new Player();
 		Scanner escolhaClonemon = new Scanner(System.in);
-		int indice = 1;
+		int indiceClonemon = 1;
+		boolean monstroRepetido = false;
 		
 		System.out.println("\n\n\nVamos comecar!");
 		
 		for(int i = 0;i < 3;i++) {
-		System.out.println("\nEscolha seu "+ indice + "th clonemon:\n");
-		lindoya.PrintMonstro();
-		coiso.PrintMonstro();
-		lucifer.PrintMonstro();
-		gelado.PrintMonstro();
-		groot.PrintMonstro();
-		eletroPaulo.PrintMonstro();
-		System.out.println("\n\nDigite o ID do CLONEMON que deseja escolher para sua equipe:");
-		player1.monstrosPlayer[i] = escolhaClonemon.nextInt();
-		indice++;
+		
+			System.out.println("\nEscolha seu "+ indiceClonemon + "th CLONEMON treinador 1:\n");
+			lindoya.PrintMonstro();
+			coiso.PrintMonstro();
+			lucifer.PrintMonstro();
+			gelado.PrintMonstro();
+			groot.PrintMonstro();
+			eletroPaulo.PrintMonstro();
+			do {
+				do {
+					System.out.println("\n\nDigite o ID do CLONEMON que deseja escolher para sua equipe treinador 1:");
+					player1.monstrosPlayer[i]= escolhaClonemon.nextInt();
+						if (player1.monstrosPlayer[i] < 1 || player1.monstrosPlayer[i] > 6) {
+							System.out.println("\nO ID escolhido nao existe! Escolha outro.");
+						}
+				}while(player1.monstrosPlayer[i] < 1 || player1.monstrosPlayer[i] > 6);
+					if (i >= 1) {
+						if (player1.monstrosPlayer[0] == player1.monstrosPlayer[1] || player1.monstrosPlayer[0] == 
+							player1.monstrosPlayer[2] || player1.monstrosPlayer[1] == player1.monstrosPlayer[2]) {
+							monstroRepetido = true;
+							System.out.println("\nVoce ja escolheu um CLONEMON igual a este! Escolha outro.");
+						}else monstroRepetido = false;
+					}
+			}while(monstroRepetido == true);	
+		indiceClonemon++;
 
 		}
 		
 		player1.ConverteID();
 		player1.PrintEquipe();
 		
-	}
-	
-	public void PartidaPlayer() {
+		Player player2 = new Player();
+		int indiceClonemonP2 = 1;
 		
+		System.out.println("\n\n\nVamos comecar!");
 		
+		for(int i = 0;i < 3;i++) {
 		
+			System.out.println("\nEscolha seu "+ indiceClonemonP2 + "th CLONEMON treinador 2:\n");
+			lindoya.PrintMonstro();
+			coiso.PrintMonstro();
+			lucifer.PrintMonstro();
+			gelado.PrintMonstro();
+			groot.PrintMonstro();
+			eletroPaulo.PrintMonstro();
+			do {
+				do {
+					System.out.println("\n\nDigite o ID do CLONEMON que deseja escolher para sua equipe treinador 2:");
+					player2.monstrosPlayer[i]= escolhaClonemon.nextInt();
+						if (player2.monstrosPlayer[i] < 1 || player2.monstrosPlayer[i] > 6) {
+							System.out.println("\nO ID escolhido nao existe! Escolha outro.");
+						}
+				}while(player2.monstrosPlayer[i] < 1 || player2.monstrosPlayer[i] > 6);
+					if (i >= 1) {
+						if (player2.monstrosPlayer[0] == player2.monstrosPlayer[1] || player2.monstrosPlayer[0] == 
+								player2.monstrosPlayer[2] || player2.monstrosPlayer[1] == player2.monstrosPlayer[2]) {
+							monstroRepetido = true;
+							System.out.println("\nVoce ja escolheu um CLONEMON igual a este! Escolha outro.");
+						}else monstroRepetido = false;
+					}
+			}while(monstroRepetido == true);	
+		indiceClonemonP2++;
+
+		}
+		
+		player2.ConverteID();
+		player2.PrintEquipe();
 	}
 
 }

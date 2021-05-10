@@ -3,7 +3,8 @@ public class Monstros {
    
     private String nome;
     private Elementos tipo;
-    private int id, vida, forca, defesa, velocidade;
+    private int id, forca, velocidade;
+    private double vida, defesa;
     private Ataques ataque;
     private Ataques ataqueEspecial;
 
@@ -14,7 +15,7 @@ public class Monstros {
         this.tipo = tipo;
         this.vida = vida * 10;
         this.forca = forca;
-        this.defesa = defesa;
+        this.defesa = defesa * 10;
         this.velocidade = velocidade;
         this.ataque = ataque;
         this.ataqueEspecial = ataqueEspecial;
@@ -23,7 +24,8 @@ public class Monstros {
     
     public void PrintMonstro(){
     	
-        System.out.println("ID: " + this.id + "\nNome: " + this.nome + "\nElemento: " + this.tipo.descricao + "\nVida: " + this.vida + "\nForca: " + this.forca + "\nDefesa: " + this.defesa + "\nVelocidade: " + this.velocidade + "\nAtaque: " + this.ataque.getNome() + "\nAtaque Especial: " + this.ataqueEspecial.getNome() +"\n");
+        System.out.println("ID: " + this.id + "\nNome: " + this.nome + "\nElemento: " + this.tipo.descricao + "\nVida: " + this.vida + "\nForca: " + this.forca + 
+        "\nDefesa: " + this.defesa + "\nVelocidade: " + this.velocidade + "\nAtaque: " + this.ataque.getNome() + "\nAtaque Especial: " + this.ataqueEspecial.getNome() +"\n");
 
     }
     
@@ -36,17 +38,84 @@ public class Monstros {
     	
     }
     
-    public int AtacarNormal() {
-    	
+    public float AtacarNormal() {
+    
     	return this.forca * this.ataque.getDano();
     	
     }
     
-    public int AtacarEspecial() {
+    public float AtacarEspecial() {
     	
     	return this.forca * this.ataqueEspecial.getDano();
     	
     }
+    
+    public double SofrerDano(double danoSofrido,double vidaRestante, Elementos tipoMonstroAtak, Elementos tipoMnstroDef) {
+    	
+    	if(tipoMonstroAtak == Elementos.AGUA && tipoMnstroDef == Elementos.ROCHA) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.ROCHA && tipoMnstroDef == Elementos.FOGO) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.FOGO && tipoMnstroDef == Elementos.GELO) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.GELO && tipoMnstroDef == Elementos.GRAMA) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.GRAMA && tipoMnstroDef == Elementos.RAIO) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.RAIO && tipoMnstroDef == Elementos.AGUA) {
+    		danoSofrido = danoSofrido * 2;
+    	}else if(tipoMonstroAtak == Elementos.RAIO && tipoMnstroDef == Elementos.GRAMA) {
+    		danoSofrido = danoSofrido / 2;
+    	}else if(tipoMonstroAtak == Elementos.GRAMA && tipoMnstroDef == Elementos.GELO) {
+    		danoSofrido = danoSofrido / 2;
+    	}else if(tipoMonstroAtak == Elementos.GELO && tipoMnstroDef == Elementos.FOGO) {
+    		danoSofrido = danoSofrido / 2;
+    	}else if(tipoMonstroAtak == Elementos.FOGO && tipoMnstroDef == Elementos.ROCHA) {
+    		danoSofrido = danoSofrido / 2;
+    	}else if(tipoMonstroAtak == Elementos.ROCHA && tipoMnstroDef == Elementos.AGUA) {
+    		danoSofrido = danoSofrido / 2;
+    	}else if(tipoMonstroAtak == Elementos.AGUA && tipoMnstroDef == Elementos.RAIO) {
+    		danoSofrido = danoSofrido / 2;
+    	}
+    	danoSofrido = danoSofrido - this.defesa * 0.2;
+		return vidaRestante - danoSofrido;
+    	
+    }
+    
+    public boolean SuperEfetivo(Elementos tipoMonstroAtak, Elementos tipoMnstroDef) {
+    	
+    	if(tipoMonstroAtak == Elementos.AGUA && tipoMnstroDef == Elementos.ROCHA) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.ROCHA && tipoMnstroDef == Elementos.FOGO) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.FOGO && tipoMnstroDef == Elementos.GELO) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.GELO && tipoMnstroDef == Elementos.GRAMA) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.GRAMA && tipoMnstroDef == Elementos.RAIO) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.RAIO && tipoMnstroDef == Elementos.AGUA) {
+    		return true;
+    	}else return false;
+    }
+    
+    public boolean PoucoEfetivo(Elementos tipoMonstroAtak, Elementos tipoMnstroDef) {
+    	
+    	if(tipoMonstroAtak == Elementos.RAIO && tipoMnstroDef == Elementos.GRAMA) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.GRAMA && tipoMnstroDef == Elementos.GELO) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.GELO && tipoMnstroDef == Elementos.FOGO) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.FOGO && tipoMnstroDef == Elementos.ROCHA) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.ROCHA && tipoMnstroDef == Elementos.AGUA) {
+    		return true;
+    	}else if(tipoMonstroAtak == Elementos.AGUA && tipoMnstroDef == Elementos.RAIO) {
+    		return true;
+    	}else return false;
+    }
+    	
 
 	public String getNome() {
 		return nome;
@@ -72,11 +141,11 @@ public class Monstros {
 		this.id = id;
 	}
 
-	public int getVida() {
+	public double getVida() {
 		return vida;
 	}
 
-	public void setVida(int vida) {
+	public void setVida(double vida) {
 		this.vida = vida;
 	}
 
@@ -88,11 +157,11 @@ public class Monstros {
 		this.forca = forca;
 	}
 
-	public int getDefesa() {
+	public double getDefesa() {
 		return defesa;
 	}
 
-	public void setDefesa(int defesa) {
+	public void setDefesa(double defesa) {
 		this.defesa = defesa;
 	}
 

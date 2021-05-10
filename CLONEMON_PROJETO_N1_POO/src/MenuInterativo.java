@@ -1,6 +1,14 @@
 import java.util.Scanner;
 
 public class MenuInterativo {
+	
+	public static void limpaTela() {
+		for(int clear = 0; clear < 100; clear++)
+		  {
+		     System.out.println("\b") ;
+		  }
+	}
+	
 	public void MenuInterativoMet() {
 		
 		boolean isRunning = true;

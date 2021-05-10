@@ -31,7 +31,7 @@ public class Player {
 	                break;
 	            
 	            case 4 : 
-	                monstroEquipe[i] = MecanicaJogo.gelado;
+	                monstroEquipe[i] = MecanicaJogo.olaf;
 	                break;
 	          
 	            case 5 : 

@@ -1,3 +1,4 @@
+//VERSAO FINAL
 import java.util.Scanner;
 
 public class MenuInterativo {
@@ -17,7 +18,7 @@ public class MenuInterativo {
 		
 		while (isRunning == true) {
 		System.out.println("---====Seja bem vindo ao CLONEMON====---");
-		System.out.println("\n\n1 - Iniciar partida contra um amigo(localmente)");
+		System.out.println("\n\n1 - Iniciar partida contra um amigo");
 		System.out.println("\n2 - Sair do jogo");
 		System.out.println("\n\nResposta:");
 		respUsuario = entrada.nextInt();

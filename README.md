@@ -11,7 +11,7 @@ Olaf do tipo GELO com seus ataques Cubo de gelo e Fica frio ai!;
 Groot do tipo GRAMA com seus ataques Corte de papel A4 e Cartolinada!;
 EletroPaulo do tipo RAIO com seus ataques Volt e Bivolt!
 
-As régras são as mesmas do POKEMON clássico de gameboy, exceto os
+As regras são as mesmas do POKEMON clássico de gameboy, exceto os
 elementos que funcionam no seguinte ciclo:
 
 

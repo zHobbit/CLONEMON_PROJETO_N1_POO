@@ -1,4 +1,4 @@
-
+//VERSAO FINAL
 public class Monstros {
    
     private String nome;
@@ -77,7 +77,7 @@ public class Monstros {
     	}else if(tipoMonstroAtak == Elementos.AGUA && tipoMnstroDef == Elementos.RAIO) {
     		danoSofrido = danoSofrido / 2;
     	}
-    	danoSofrido = danoSofrido - this.defesa * 0.2;
+    	danoSofrido = danoSofrido - this.defesa * 0.15;
 		return vidaRestante - danoSofrido;
     	
     }

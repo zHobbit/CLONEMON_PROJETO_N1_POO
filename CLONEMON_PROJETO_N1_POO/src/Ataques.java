@@ -1,3 +1,4 @@
+//VERSAO FINAL
 public class Ataques {
 	
     private String nome;

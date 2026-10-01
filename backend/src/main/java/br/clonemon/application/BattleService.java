@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class BattleService {
 
-    public record TurnResult(List<String> events, BattleSession session) {}
+    public record TurnResult(List<Battle.Event> events, BattleSession session) {}
 
     private final BattleRepository battles;
     private final MonsterRepository monsters;
@@ -73,10 +73,10 @@ public class BattleService {
         BattleSession session = get(trainerId, battleId);
         if (session.battle().isFinished()) throw new ConflictException("Battle already finished");
 
-        List<String> events = new ArrayList<>(session.battle().submit(action));
+        List<Battle.Event> events = new ArrayList<>(session.battle().submit(action));
         syncPlayerMonsters(session);
         if (session.battle().status() == Battle.Status.PLAYER_WON)
-            events.add(recruit(trainerId, session.battle().enemyTeam().getFirst()));
+            events.add(session.battle().narrate(recruit(trainerId, session.battle().enemyTeam().getFirst())));
         return new TurnResult(events, persist(session));
     }
 

@@ -172,7 +172,7 @@ class ApiIntegrationTest {
             String body = nextAction(turn == null ? started : turn, turn == null ? "$" : "$.battle");
             turn = post(base + "/turns", token, body);
             assertThat(turn).hasStatusOk();
-            List<String> events = read(turn, "$.events");
+            List<String> events = read(turn, "$.events[*].text");
             assertThat(events).isNotEmpty();
             status = read(turn, "$.battle.status");
         }

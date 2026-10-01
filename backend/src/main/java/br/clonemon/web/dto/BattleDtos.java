@@ -52,7 +52,7 @@ public final class BattleDtos {
         }
     }
 
-    public record TurnResponse(List<String> events, BattleDto battle) {
+    public record TurnResponse(List<Battle.Event> events, BattleDto battle) {
         public static TurnResponse of(BattleService.TurnResult r) {
             return new TurnResponse(r.events(), BattleDto.of(r.session()));
         }

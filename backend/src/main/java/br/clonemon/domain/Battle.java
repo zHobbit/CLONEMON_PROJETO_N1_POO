@@ -12,6 +12,12 @@ public class Battle {
     public record Switch(int teamIndex) implements Action {}
     public record Run() implements Action {}
 
+    /** Efeito visual associado a um evento, para a interface animar. */
+    public enum Effect { NONE, PLAYER_HIT, ENEMY_HIT, PLAYER_FAINT, ENEMY_FAINT, PLAYER_SWITCH, ENEMY_SWITCH, WON, LOST, FLED }
+
+    /** Um passo do turno, com o estado visivel logo apos ele (monstro ativo e HP de cada lado). */
+    public record Event(String text, Effect effect, int playerActive, int playerHp, int enemyHp) {}
+
     /** Estado completo para persistencia. */
     public record State(List<Monster> playerTeam, List<Monster> enemyTeam, int playerActive, int enemyActive,
                         Status status, List<String> log) {
@@ -69,19 +75,19 @@ public class Battle {
     public List<String> log() { return Collections.unmodifiableList(log); }
 
     /** Executa um turno completo e retorna os eventos gerados neste turno. */
-    public List<String> submit(Action action) {
+    public List<Event> submit(Action action) {
         if (isFinished()) throw new IllegalStateException("Battle finished");
-        List<String> events = new ArrayList<>();
+        List<Event> events = new ArrayList<>();
 
         switch (action) {
             case Run r -> {
                 status = Status.FLED;
-                events.add("Voce fugiu!");
+                events.add(event("Voce fugiu!", Effect.FLED));
             }
             case Switch s -> {
                 validateSwitch(s.teamIndex());
                 playerActive = s.teamIndex();
-                events.add("Vai, " + playerMonster().species().name() + "!");
+                events.add(event("Vai, " + playerMonster().species().name() + "!", Effect.PLAYER_SWITCH));
                 attack(enemyMonster(), playerMonster(), ai.chooseMove(enemyMonster(), playerMonster()), events);
             }
             case UseMove m -> {
@@ -97,40 +103,53 @@ public class Battle {
             }
         }
         if (!isFinished()) resolveFaints(events);
-        log.addAll(events);
+        events.forEach(e -> log.add(e.text()));
         return events;
     }
 
-    private void attack(Monster atk, Monster def, int moveIdx, List<String> events) {
-        Move move = atk.use(moveIdx);
-        events.add(atk.species().name() + " usou " + move.name() + "!");
-        DamageCalculator.Result r = calc.calculate(atk, def, move);
-        if (!r.hit()) { events.add("Errou!"); return; }
-        def.takeDamage(r.damage());
-        if (r.critical()) events.add("Golpe critico!");
-        if (r.effectiveness() > 1) events.add("E super efetivo!");
-        if (r.effectiveness() < 1) events.add("Nao e muito efetivo...");
-        if (def.isFainted()) events.add(def.species().name() + " desmaiou!");
+    /** Evento sem efeito visual, com o estado atual; usado para mensagens fora do turno. */
+    public Event narrate(String text) {
+        return event(text, Effect.NONE);
     }
 
-    private void resolveFaints(List<String> events) {
+    private Event event(String text, Effect effect) {
+        return new Event(text, effect, playerActive, playerMonster().currentHp(), enemyMonster().currentHp());
+    }
+
+    private void attack(Monster atk, Monster def, int moveIdx, List<Event> events) {
+        boolean playerAttacking = atk == playerMonster();
+        Move move = atk.use(moveIdx);
+        DamageCalculator.Result r = calc.calculate(atk, def, move);
+        if (r.hit()) def.takeDamage(r.damage());
+        Effect hit = !r.hit() ? Effect.NONE : playerAttacking ? Effect.ENEMY_HIT : Effect.PLAYER_HIT;
+        events.add(event(atk.species().name() + " usou " + move.name() + "!", hit));
+        if (!r.hit()) { events.add(event("Errou!", Effect.NONE)); return; }
+        if (r.critical()) events.add(event("Golpe critico!", Effect.NONE));
+        if (r.effectiveness() > 1) events.add(event("E super efetivo!", Effect.NONE));
+        if (r.effectiveness() < 1) events.add(event("Nao e muito efetivo...", Effect.NONE));
+        if (def.isFainted())
+            events.add(event(def.species().name() + " desmaiou!", playerAttacking ? Effect.ENEMY_FAINT : Effect.PLAYER_FAINT));
+    }
+
+    private void resolveFaints(List<Event> events) {
         if (enemyMonster().isFainted()) {
             if (!playerMonster().isFainted()) {
                 int xp = ExperienceCurve.xpReward(enemyMonster().level());
                 int gained = playerMonster().gainXp(xp);
-                events.add(playerMonster().species().name() + " ganhou " + xp + " XP!");
-                if (gained > 0) events.add(playerMonster().species().name() + " subiu para o nivel " + playerMonster().level() + "!");
+                events.add(event(playerMonster().species().name() + " ganhou " + xp + " XP!", Effect.NONE));
+                if (gained > 0)
+                    events.add(event(playerMonster().species().name() + " subiu para o nivel " + playerMonster().level() + "!", Effect.NONE));
             }
             int next = firstAlive(enemyTeam);
-            if (next < 0) { status = Status.PLAYER_WON; events.add("Voce venceu!"); return; }
+            if (next < 0) { status = Status.PLAYER_WON; events.add(event("Voce venceu!", Effect.WON)); return; }
             enemyActive = next;
-            events.add("Oponente enviou " + enemyMonster().species().name() + "!");
+            events.add(event("Oponente enviou " + enemyMonster().species().name() + "!", Effect.ENEMY_SWITCH));
         }
         if (playerMonster().isFainted()) {
             int next = firstAlive(playerTeam);
-            if (next < 0) { status = Status.PLAYER_LOST; events.add("Voce perdeu..."); return; }
+            if (next < 0) { status = Status.PLAYER_LOST; events.add(event("Voce perdeu...", Effect.LOST)); return; }
             playerActive = next;
-            events.add("Vai, " + playerMonster().species().name() + "!");
+            events.add(event("Vai, " + playerMonster().species().name() + "!", Effect.PLAYER_SWITCH));
         }
     }
 

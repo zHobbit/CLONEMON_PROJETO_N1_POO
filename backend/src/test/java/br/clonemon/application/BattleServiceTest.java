@@ -97,7 +97,7 @@ class BattleServiceTest {
             last = service.submitTurn(TRAINER, s.id(), new Battle.UseMove(1));
 
         assertThat(last.session().battle().status()).isEqualTo(Battle.Status.PLAYER_WON);
-        assertThat(last.events()).last().isEqualTo("Coiso entrou para o seu time!");
+        assertThat(last.events()).last().extracting(Battle.Event::text).isEqualTo("Coiso entrou para o seu time!");
         var roster = new TeamService(monsters, battles, new InMemoryPorts.FixtureCatalog()).roster(TRAINER);
         assertThat(roster.team()).hasSize(2);
         assertThat(roster.team().get(1).monster().species()).isEqualTo(Catalog.COISO);
@@ -117,7 +117,7 @@ class BattleServiceTest {
         for (int i = 0; i < 10 && (last == null || !last.session().battle().isFinished()); i++)
             last = service.submitTurn(TRAINER, s.id(), new Battle.UseMove(1));
 
-        assertThat(last.events()).last().isEqualTo("Coiso foi enviado para o PC.");
+        assertThat(last.events()).last().extracting(Battle.Event::text).isEqualTo("Coiso foi enviado para o PC.");
         assertThat(monsters.findByTrainer(TRAINER)).hasSize(7).last().extracting(OwnedMonster::teamSlot).isNull();
     }
 

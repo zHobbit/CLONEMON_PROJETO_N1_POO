@@ -20,8 +20,8 @@ class BattleTest {
     void fasterMonsterAttacksFirst() {
         Battle b = new Battle(List.of(new Monster(Catalog.ELETROPAULO, 20)),
                 List.of(new Monster(Catalog.COISO, 20)), calc, AiStrategy.greedy());
-        List<String> events = b.submit(new Battle.UseMove(0));
-        assertThat(events.get(0)).startsWith("EletroPaulo usou");
+        List<Battle.Event> events = b.submit(new Battle.UseMove(0));
+        assertThat(events.get(0).text()).startsWith("EletroPaulo usou");
     }
 
     @Test
@@ -53,8 +53,8 @@ class BattleTest {
         Monster c = new Monster(Catalog.COISO, 20);
         Monster enemy = new Monster(Catalog.LUCIFER, 20);
         Battle b = new Battle(List.of(a, c), List.of(enemy), calc, AiStrategy.greedy());
-        List<String> events = b.submit(new Battle.Switch(1));
-        assertThat(events.get(0)).isEqualTo("Vai, Coiso!");
+        List<Battle.Event> events = b.submit(new Battle.Switch(1));
+        assertThat(events.get(0).text()).isEqualTo("Vai, Coiso!");
         assertThat(c.currentHp()).isLessThan(c.maxHp());
         assertThat(enemy.currentHp()).isEqualTo(enemy.maxHp());
     }
@@ -74,10 +74,39 @@ class BattleTest {
     }
 
     @Test
+    void eventsCarryVisibleStateAfterEachStep() {
+        Monster hero = new Monster(Catalog.ELETROPAULO, 20);
+        Monster enemy = new Monster(Catalog.LINDOYA, 20);
+        int enemyHpBefore = enemy.currentHp();
+        Battle b = new Battle(List.of(hero), List.of(enemy), calc, AiStrategy.greedy());
+
+        List<Battle.Event> events = b.submit(new Battle.UseMove(0));
+
+        Battle.Event playerAttack = events.get(0);
+        assertThat(playerAttack.effect()).isEqualTo(Battle.Effect.ENEMY_HIT);
+        assertThat(playerAttack.enemyHp()).isLessThan(enemyHpBefore);
+        assertThat(playerAttack.playerHp()).isEqualTo(hero.maxHp());
+        assertThat(events.get(1).text()).isEqualTo("E super efetivo!");
+        Battle.Event enemyAttack = events.stream().filter(e -> e.text().startsWith("Lindoya usou")).findFirst().orElseThrow();
+        assertThat(enemyAttack.effect()).isEqualTo(Battle.Effect.PLAYER_HIT);
+        assertThat(enemyAttack.playerHp()).isEqualTo(hero.currentHp());
+        assertThat(events.getLast().enemyHp()).isEqualTo(enemy.currentHp());
+    }
+
+    @Test
+    void faintAndVictoryHaveEffects() {
+        Battle b = new Battle(List.of(new Monster(Catalog.LINDOYA, 50)), List.of(new Monster(Catalog.COISO, 2)), calc, AiStrategy.greedy());
+        List<Battle.Event> events = b.submit(new Battle.UseMove(1));
+        assertThat(events).extracting(Battle.Event::effect)
+                .containsSubsequence(Battle.Effect.ENEMY_HIT, Battle.Effect.ENEMY_FAINT, Battle.Effect.WON);
+        assertThat(events.getLast().enemyHp()).isZero();
+    }
+
+    @Test
     void runEndsBattleWithoutEnemyAttack() {
         Monster hero = new Monster(Catalog.GROOT, 5);
         Battle b = new Battle(List.of(hero), List.of(new Monster(Catalog.LUCIFER, 30)), calc, AiStrategy.greedy());
-        assertThat(b.submit(new Battle.Run())).containsExactly("Voce fugiu!");
+        assertThat(b.submit(new Battle.Run())).extracting(Battle.Event::text).containsExactly("Voce fugiu!");
         assertThat(b.status()).isEqualTo(Battle.Status.FLED);
         assertThat(hero.currentHp()).isEqualTo(hero.maxHp());
     }

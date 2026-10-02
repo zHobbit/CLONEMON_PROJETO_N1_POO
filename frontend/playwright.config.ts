@@ -12,6 +12,7 @@ const backend = win
  */
 export default defineConfig({
   testDir: 'e2e',
+  testIgnore: 'art.spec.ts',
   timeout: 180_000,
   outputDir: 'test-results',
   use: {
@@ -20,16 +21,13 @@ export default defineConfig({
     viewport: { width: 960, height: 640 },
   },
   webServer: [
-    // SKIP_BACKEND=1 para testes que so precisam do front (ex.: a galeria de arte).
-    ...(process.env.SKIP_BACKEND
-      ? []
-      : [{
-          command: backend,
-          cwd: '..',
-          url: 'http://localhost:8081/api/species',
-          reuseExistingServer: !process.env.CI,
-          timeout: 300_000,
-        }]),
+    {
+      command: backend,
+      cwd: '..',
+      url: 'http://localhost:8081/api/species',
+      reuseExistingServer: !process.env.CI,
+      timeout: 300_000,
+    },
     {
       command: 'npm run dev',
       url: 'http://localhost:5173',

@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
 import { ApiError } from '../api/client';
 import type { Battle, Combatant, TurnAction, TurnResponse } from '../api/types';
-import { monsterTexture } from '../art/placeholder';
+import { BATTLE_BG } from '../art/scenery';
+import { BG, addMonster, elementKey, showMonster } from '../art/textures';
 import { planTurn, type Side, type Step, type ViewState, viewOf } from '../battle/playback';
-import { COLORS, SCENES, WIDTH } from '../config';
+import { SCENES, WIDTH } from '../config';
 import { api } from '../services';
 import { formatHp } from '../ui/hp';
 import { HpBar } from '../ui/HpBar';
@@ -15,12 +16,15 @@ interface BattleData {
   battle: Battle;
 }
 
-const ENEMY_POS = { x: 176, y: 42 };
-const PLAYER_POS = { x: 60, y: 84 };
+/** Centro dos sprites 48x48, com os pes sobre as plataformas desenhadas no fundo. */
+const ENEMY_POS = { x: BATTLE_BG.enemy.x, y: BATTLE_BG.enemy.y - 20 };
+const PLAYER_POS = { x: BATTLE_BG.player.x, y: BATTLE_BG.player.y - 20 };
+const LUNGE = 8;
 
-/** Nome, nivel e HP de um lado da batalha. */
+/** Nome, tipo, nivel e HP de um lado da batalha. */
 class InfoBox {
   private readonly name: Phaser.GameObjects.Text;
+  private readonly type: Phaser.GameObjects.Image;
   private readonly level: Phaser.GameObjects.Text;
   private readonly numbers?: Phaser.GameObjects.Text;
   private readonly bar: HpBar;
@@ -29,6 +33,7 @@ class InfoBox {
   constructor(scene: Phaser.Scene, x: number, y: number, w: number, showNumbers: boolean) {
     addFrame(scene, x, y, w, showNumbers ? 36 : 26);
     this.name = addText(scene, x + 6, y + 5, '');
+    this.type = scene.add.image(0, y + 3, elementKey('AGUA')).setOrigin(0);
     this.level = addText(scene, x + 6, y + 15, '');
     if (showNumbers) this.numbers = addText(scene, x + w - 6, y + 25, '').setOrigin(1, 0);
     this.bar = new HpBar(scene, x + 42, y + 15, 48, (hp) => this.numbers?.setText(formatHp(hp, this.max)));
@@ -37,6 +42,7 @@ class InfoBox {
   show(c: Combatant, hp = c.currentHp): void {
     this.max = c.maxHp;
     this.name.setText(c.name.toUpperCase());
+    this.type.setTexture(elementKey(c.element)).setX(this.name.x + this.name.width + 3);
     this.level.setText(`Nv${c.level}`);
     void this.bar.set(hp, c.maxHp);
   }
@@ -51,8 +57,8 @@ export class BattleScene extends Phaser.Scene {
   /** Exposto para os testes E2E. */
   battle!: Battle;
   private view!: ViewState;
-  private enemySprite!: Phaser.GameObjects.Image;
-  private playerSprite!: Phaser.GameObjects.Image;
+  private enemySprite!: Phaser.GameObjects.Sprite;
+  private playerSprite!: Phaser.GameObjects.Sprite;
   private enemyInfo!: InfoBox;
   private playerInfo!: InfoBox;
   private textBox!: TextBox;
@@ -66,9 +72,9 @@ export class BattleScene extends Phaser.Scene {
     this.battle = data.battle;
     this.view = viewOf(this.battle);
     this.actionCursor = 0;
-    this.drawBackground();
-    this.enemySprite = this.add.image(ENEMY_POS.x, ENEMY_POS.y, monsterTexture(this.battle.enemy.speciesId, 'front'));
-    this.playerSprite = this.add.image(PLAYER_POS.x, PLAYER_POS.y, monsterTexture(this.active().speciesId, 'back'));
+    this.add.image(0, 0, BG.battle).setOrigin(0);
+    this.enemySprite = addMonster(this, ENEMY_POS.x, ENEMY_POS.y, this.battle.enemy.speciesId, 'front');
+    this.playerSprite = addMonster(this, PLAYER_POS.x, PLAYER_POS.y, this.active().speciesId, 'back');
     this.enemyInfo = new InfoBox(this, 4, 6, 116, false);
     this.playerInfo = new InfoBox(this, 120, 70, 116, true);
     this.textBox = new TextBox(this);
@@ -79,17 +85,6 @@ export class BattleScene extends Phaser.Scene {
 
   private active(): Combatant {
     return this.battle.playerTeam[this.battle.playerActive];
-  }
-
-  private drawBackground(): void {
-    this.cameras.main.setBackgroundColor(COLORS.sky);
-    const g = this.add.graphics();
-    for (const [pos, w, h] of [[ENEMY_POS, 88, 18], [PLAYER_POS, 108, 22]] as const) {
-      g.fillStyle(COLORS.groundDark);
-      g.fillEllipse(pos.x, pos.y + h + 4, w, h);
-      g.fillStyle(COLORS.ground);
-      g.fillEllipse(pos.x, pos.y + h + 2, w - 8, h - 6);
-    }
   }
 
   private async run(): Promise<void> {
@@ -202,6 +197,12 @@ export class BattleScene extends Phaser.Scene {
         return this.textBox.say(step.text);
       case 'wait':
         return this.textBox.waitArrow();
+      case 'attack': {
+        // Investida na direcao do oponente: o jogador sobe para a direita, o inimigo desce para a esquerda.
+        const dir = step.side === 'player' ? 1 : -1;
+        const s = this.sprite(step.side);
+        return tween(this, { targets: s, x: s.x + dir * LUNGE, y: s.y - dir * LUNGE / 2, duration: 90, yoyo: true, ease: 'Quad.Out' });
+      }
       case 'flash':
         return tween(this, { targets: this.sprite(step.side), alpha: 0, duration: 70, yoyo: true, repeat: 2 });
       case 'hp':
@@ -219,7 +220,8 @@ export class BattleScene extends Phaser.Scene {
     const c = this.battle.playerTeam[index];
     const s = this.playerSprite;
     if (s.alpha > 0) await tween(this, { targets: s, x: -40, alpha: 0, duration: 250 });
-    s.setTexture(monsterTexture(c.speciesId, 'back')).setPosition(-40, PLAYER_POS.y).setAlpha(1);
+    showMonster(s, c.speciesId, 'back');
+    s.setPosition(-40, PLAYER_POS.y).setAlpha(1);
     this.playerInfo.show(c, hp);
     await tween(this, { targets: s, x: PLAYER_POS.x, duration: 300, ease: 'Quad.Out' });
   }
@@ -229,19 +231,15 @@ export class BattleScene extends Phaser.Scene {
     this.battle = battle;
     this.view = viewOf(battle);
     const a = this.active();
-    this.playerSprite
-      .setTexture(monsterTexture(a.speciesId, 'back'))
-      .setPosition(PLAYER_POS.x, PLAYER_POS.y)
-      .setAlpha(a.fainted ? 0 : 1);
-    this.enemySprite
-      .setTexture(monsterTexture(battle.enemy.speciesId, 'front'))
-      .setPosition(ENEMY_POS.x, ENEMY_POS.y)
-      .setAlpha(battle.enemy.fainted ? 0 : 1);
+    showMonster(this.playerSprite, a.speciesId, 'back');
+    this.playerSprite.setPosition(PLAYER_POS.x, PLAYER_POS.y).setAlpha(a.fainted ? 0 : 1);
+    showMonster(this.enemySprite, battle.enemy.speciesId, 'front');
+    this.enemySprite.setPosition(ENEMY_POS.x, ENEMY_POS.y).setAlpha(battle.enemy.fainted ? 0 : 1);
     this.enemyInfo.show(battle.enemy);
     this.playerInfo.show(a);
   }
 
-  private sprite(side: Side): Phaser.GameObjects.Image {
+  private sprite(side: Side): Phaser.GameObjects.Sprite {
     return side === 'player' ? this.playerSprite : this.enemySprite;
   }
 

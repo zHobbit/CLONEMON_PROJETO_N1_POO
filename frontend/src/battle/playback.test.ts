@@ -9,10 +9,11 @@ function ev(text: string, partial: Partial<TurnEvent> = {}): TurnEvent {
 }
 
 describe('planTurn', () => {
-  it('animates a hit: text, flash, hp drop, then waits', () => {
+  it('animates a hit: text, attacker lunge, target flash, hp drop, then waits', () => {
     const steps = planTurn(start, [ev('Lucifer usou Molotov!', { effect: 'ENEMY_HIT', enemyHp: 9 })]);
     expect(steps).toEqual([
       { kind: 'text', text: 'Lucifer usou Molotov!' },
+      { kind: 'attack', side: 'player' },
       { kind: 'flash', side: 'enemy' },
       { kind: 'hp', side: 'enemy', to: 9 },
       { kind: 'wait' },
@@ -37,6 +38,10 @@ describe('planTurn', () => {
     expect(steps.filter((s) => s.kind === 'flash')).toEqual([
       { kind: 'flash', side: 'enemy' },
       { kind: 'flash', side: 'player' },
+    ]);
+    expect(steps.filter((s) => s.kind === 'attack')).toEqual([
+      { kind: 'attack', side: 'player' },
+      { kind: 'attack', side: 'enemy' },
     ]);
   });
 

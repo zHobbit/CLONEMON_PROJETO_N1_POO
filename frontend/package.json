@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "art:preview": "SKIP_BACKEND=1 playwright test e2e/art.spec.ts"
+    "art:preview": "playwright test -c playwright.art.config.ts"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.3.0",

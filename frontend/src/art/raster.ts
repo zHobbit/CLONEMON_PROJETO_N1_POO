@@ -78,7 +78,7 @@ const THRESHOLDS: Record<number, number[]> = {
   3: [0.62, 0.05],
   4: [0.8, 0.38, -0.15],
 };
-const DITHER_BAND = 0.018;
+const DITHER_BAND = 0.008;
 
 /** Escolhe o tom da rampa pela luz que chega na "superficie" do ponto (nx, ny) da forma. */
 export function toneFor(nx: number, ny: number, tones: number, x: number, y: number, dither = true): number {

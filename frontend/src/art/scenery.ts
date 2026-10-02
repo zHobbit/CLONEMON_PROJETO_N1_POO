@@ -43,7 +43,7 @@ export const BATTLE_BG = { width: 240, height: 112, enemy: { x: 176, y: 62 }, pl
 export function drawBattleBackground(): PixelCanvas {
   const { width, height, enemy, player } = BATTLE_BG;
   const c = new PixelCanvas(width, height);
-  bands(c, 0, [[C.blue, 10], [C.cyan, 16], [C.white, 30]]);
+  bands(c, 0, [[C.blue, 12], [C.cyan, 24], [C.white, 28]]);
   cloud(c, 40, 22, 28);
   cloud(c, 128, 14, 22);
   cloud(c, 210, 30, 18);
@@ -61,7 +61,7 @@ export function drawBattleBackground(): PixelCanvas {
 export function drawMenuTile(): PixelCanvas {
   const c = new PixelCanvas(16, 16);
   for (let y = 0; y < 16; y++)
-    for (let x = 0; x < 16; x++) c.set(x, y, (x + y) % 8 < 4 ? C.cyan : C.white);
+    for (let x = 0; x < 16; x++) c.set(x, y, (x + y) % 8 < 2 ? C.silver : C.white);
   return c;
 }
 

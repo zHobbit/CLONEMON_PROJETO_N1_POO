@@ -13,6 +13,8 @@ export interface ViewState {
 export type Step =
   | { kind: 'text'; text: string }
   | { kind: 'wait' }
+  /** Investida de quem ataca, antes do alvo piscar. */
+  | { kind: 'attack'; side: Side }
   | { kind: 'flash'; side: Side }
   | { kind: 'hp'; side: Side; to: number }
   | { kind: 'faint'; side: Side }
@@ -46,7 +48,10 @@ export function planTurn(initial: ViewState, events: TurnEvent[]): Step[] {
     steps.push({ kind: 'text', text: e.text });
 
     const hit = HIT[e.effect];
-    if (hit) steps.push({ kind: 'flash', side: hit });
+    if (hit) {
+      steps.push({ kind: 'attack', side: hit === 'enemy' ? 'player' : 'enemy' });
+      steps.push({ kind: 'flash', side: hit });
+    }
     if (e.enemyHp !== state.enemyHp) steps.push({ kind: 'hp', side: 'enemy', to: e.enemyHp });
     if (e.playerHp !== state.playerHp) steps.push({ kind: 'hp', side: 'player', to: e.playerHp });
 

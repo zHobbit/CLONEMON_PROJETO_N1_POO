@@ -16,7 +16,7 @@ const COLUMNS = ['frente 0', 'frente 1', 'costas 0', 'costas 1', 'icone'];
 const SCENE_ZOOM = 3;
 
 const canvas = document.getElementById('gallery') as HTMLCanvasElement;
-canvas.width = LEFT + CELL * COLUMNS.length;
+canvas.width = LEFT + CELL * COLUMNS.length + 60;
 const monstersHeight = 24 + CELL * SPECIES.length;
 canvas.height = monstersHeight + 80 + BATTLE_BG.height * SCENE_ZOOM + 24;
 const ctx = canvas.getContext('2d')!;
@@ -56,8 +56,8 @@ SPECIES.forEach(([name, element], row) => {
   ctx.fillStyle = '#f8f8f0';
   ctx.fillRect(LEFT + 4 * CELL, y, ICON_SIZE * ZOOM * 2, ICON_SIZE * ZOOM * 2);
   blit(drawIcon(name, element), LEFT + 4 * CELL, y, ZOOM * 2);
-  ctx.fillRect(LEFT + 4 * CELL, y + ICON_SIZE * ZOOM * 2 + 8, ELEMENT_ICON_SIZE * ZOOM * 2, ELEMENT_ICON_SIZE * ZOOM * 2);
-  blit(drawElementIcon(element), LEFT + 4 * CELL, y + ICON_SIZE * ZOOM * 2 + 8, ZOOM * 2);
+  ctx.fillRect(LEFT + 4 * CELL + 136, y, ELEMENT_ICON_SIZE * ZOOM, ELEMENT_ICON_SIZE * ZOOM);
+  blit(drawElementIcon(element), LEFT + 4 * CELL + 136, y, ZOOM);
 });
 
 // Cena de batalha montada com os assets reais, no tamanho do jogo x3.

@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { ApiError } from '../api/client';
 import type { Roster } from '../api/types';
-import { COLORS, SCENES } from '../config';
+import { addMenuBackground } from '../art/textures';
+import { SCENES } from '../config';
 import { api } from '../services';
 import { Menu } from '../ui/Menu';
 import { MonsterRows } from '../ui/MonsterRows';
@@ -28,7 +29,7 @@ export class HubScene extends Phaser.Scene {
 
   create(data: HubData): void {
     this.roster = null;
-    this.cameras.main.setBackgroundColor(COLORS.sky);
+    addMenuBackground(this);
     addFrame(this, 0, 0, 164, 112);
     this.header = addText(this, 8, 6, '');
     this.rows = new MonsterRows(this, 6, 20, 152);

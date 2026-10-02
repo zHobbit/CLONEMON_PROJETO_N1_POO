@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { createPlaceholderMonsters } from '../art/placeholder';
+import { registerArt } from '../art/textures';
 import { CSS, HEIGHT, SCENES, WIDTH } from '../config';
 import { api, catalog } from '../services';
 import { addText } from '../ui/widgets';
@@ -18,14 +18,16 @@ export class BootScene extends Phaser.Scene {
   }
 
   private async start(): Promise<void> {
+    let species;
     try {
-      const species = await api.species();
-      catalog.set(species);
-      createPlaceholderMonsters(this, species);
-      this.scene.start(SCENES.title);
+      species = await api.species();
     } catch {
       this.status.setText('SERVIDOR OFFLINE\nTENTANDO DE NOVO...');
       this.time.delayedCall(3000, () => void this.start());
+      return;
     }
+    catalog.set(species);
+    registerArt(this, species);
+    this.scene.start(SCENES.title);
   }
 }

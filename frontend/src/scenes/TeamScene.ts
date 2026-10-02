@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { Monster, Roster } from '../api/types';
-import { COLORS, SCENES } from '../config';
+import { addMenuBackground } from '../art/textures';
+import { SCENES } from '../config';
 import { api } from '../services';
 import { type TeamAction, allMonsters, applyAction, availableActions, teamIds } from '../team/teamOps';
 import { onKey } from '../ui/input';
@@ -31,7 +32,7 @@ export class TeamScene extends Phaser.Scene {
   create(data: TeamData): void {
     this.index = 0;
     this.offset = 0;
-    this.cameras.main.setBackgroundColor(COLORS.sky);
+    addMenuBackground(this);
     addFrame(this, 0, 0, 164, 112);
     addText(this, 8, 6, 'TIME E PC   ESC: VOLTAR');
     this.rows = new MonsterRows(this, 6, 20, 152);

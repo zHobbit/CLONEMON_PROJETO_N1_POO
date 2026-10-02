@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { Species } from '../api/types';
-import { monsterTexture } from '../art/placeholder';
+import { addMenuBackground, addMonster, elementKey } from '../art/textures';
 import { COLORS, SCENES, WIDTH } from '../config';
 import { api, catalog } from '../services';
 import { onKey } from '../ui/input';
@@ -12,13 +12,15 @@ import { addFrame, addText } from '../ui/widgets';
 const COLS = 3;
 const CELL_W = 80;
 const CELL_H = 48;
-const TOP = 18;
+const TOP = 15;
 
-/** Escolha do primeiro clonemon, numa grade 3x2. */
+/** Escolha do primeiro clonemon, numa grade 3x2. Nome, tipo e atributos aparecem na caixa de texto. */
 export class StarterScene extends Phaser.Scene {
   private highlight!: Phaser.GameObjects.Graphics;
+  private typeIcon!: Phaser.GameObjects.Image;
   private textBox!: TextBox;
   private index = 0;
+  private browsing = false;
 
   constructor() {
     super(SCENES.starter);
@@ -26,33 +28,31 @@ export class StarterScene extends Phaser.Scene {
 
   create(): void {
     this.index = 0;
-    this.cameras.main.setBackgroundColor(COLORS.sky);
+    addMenuBackground(this);
+    addFrame(this, 30, 0, WIDTH - 60, 15);
     addText(this, WIDTH / 2, 4, 'ESCOLHA SEU CLONEMON!').setOrigin(0.5, 0);
 
     const species = catalog.all();
     this.highlight = this.add.graphics();
-    this.textBox = new TextBox(this);
     species.forEach((s, i) => {
       const { x, y } = cell(i);
-      const sprite = this.add.image(x + CELL_W / 2, y + 18, monsterTexture(s.id, 'front')).setScale(0.75);
+      const sprite = addMonster(this, x + CELL_W / 2, y + CELL_H / 2, s.id, 'front');
       sprite.setInteractive({ useHandCursor: true }).on('pointerover', () => {
         if (!this.browsing) return;
         this.index = i;
         this.show(species);
       });
-      const label = addText(this, x + CELL_W / 2, y + 38, s.name.toUpperCase()).setOrigin(0.5, 0);
-      // Nomes longos (ELETROPAULO) nao podem sair da tela.
-      label.setX(Phaser.Math.Clamp(label.x, label.width / 2 + 2, WIDTH - label.width / 2 - 2));
     });
+    this.textBox = new TextBox(this);
+    this.typeIcon = this.add.image(0, 0, elementKey(species[0].element)).setOrigin(0);
     void this.pick(species);
   }
-
-  private browsing = false;
 
   private async pick(species: Species[]): Promise<void> {
     for (;;) {
       const chosen = await this.browse(species);
       const s = species[chosen];
+      this.typeIcon.setVisible(false);
       this.textBox.setWrapWidth(150);
       this.textBox.setText(`Escolher ${s.name.toUpperCase()}, do tipo ${s.element}?`);
       const frame = addFrame(this, 176, 72, 64, 40);
@@ -101,9 +101,12 @@ export class StarterScene extends Phaser.Scene {
     const { x, y } = cell(this.index);
     this.highlight.clear();
     this.highlight.lineStyle(2, COLORS.accent);
-    this.highlight.strokeRect(x + 4, y, CELL_W - 8, CELL_H - 2);
+    this.highlight.strokeRect(x + 14, y + 1, CELL_W - 28, CELL_H - 2);
     const s = species[this.index];
-    this.textBox.setText(`${s.name.toUpperCase()}  TIPO ${s.element}\nATK ${s.baseAtk}  DEF ${s.baseDef}  VEL ${s.baseSpd}`);
+    const name = s.name.toUpperCase();
+    this.textBox.setText(`${name}     ${s.element}\nATK ${s.baseAtk}  DEF ${s.baseDef}  VEL ${s.baseSpd}`);
+    // Icone do tipo logo depois do nome (8px por caractere + 1 espaco).
+    this.typeIcon.setTexture(elementKey(s.element)).setPosition(8 + (name.length + 1) * 8, 118).setVisible(true);
   }
 }
 

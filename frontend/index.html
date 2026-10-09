@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CLONEMON</title>
+  </head>
+  <body>
+    <main id="app">
+      <div id="game"></div>
+      <form id="login" class="overlay" hidden novalidate>
+        <h1>CLONEMON</h1>
+        <label>
+          Treinador
+          <input id="username" name="username" autocomplete="username" minlength="3" maxlength="20"
+                 pattern="[A-Za-z0-9_]+" required />
+        </label>
+        <label>
+          Senha
+          <input id="password" name="password" type="password" autocomplete="current-password"
+                 minlength="6" maxlength="72" required />
+        </label>
+        <p id="login-error" role="alert"></p>
+        <div class="buttons">
+          <button type="submit" id="btn-login">Entrar</button>
+          <button type="button" id="btn-register">Criar conta</button>
+        </div>
+      </form>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

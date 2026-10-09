@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: clonemon
+      POSTGRES_USER: clonemon
+      POSTGRES_PASSWORD: clonemon
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clonemon"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:

@@ -18,7 +18,7 @@ export class TitleScene extends Phaser.Scene {
     addText(this, WIDTH / 2, 54, 'O MELHOR PIOR CLONE', { color: CSS.paper }).setOrigin(0.5);
 
     // Em zigue-zague para os sprites de 48px caberem lado a lado.
-    const species = catalog.all();
+    const species = catalog.starters();
     species.forEach((s, i) => {
       const x = WIDTH / 2 + (i - (species.length - 1) / 2) * 38;
       addMonster(this, x, i % 2 === 0 ? 98 : 110, s.id, 'front');

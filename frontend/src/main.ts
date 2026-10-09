@@ -17,6 +17,8 @@ function integerZoom(): number {
 }
 
 async function start(): Promise<void> {
+  // O jogo carregou, entao nao foi aberto direto do disco: some com o aviso do index.html.
+  document.getElementById('boot-hint')?.remove();
   try {
     await document.fonts.load(`8px ${FONT_FAMILY}`);
   } catch {

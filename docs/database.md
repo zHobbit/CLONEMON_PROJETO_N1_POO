@@ -4,7 +4,9 @@ PostgreSQL, com o schema versionado pelo Flyway em
 [`backend/src/main/resources/db/migration`](../backend/src/main/resources/db/migration):
 
 - `V1__schema.sql`: tabelas, chaves e restrições.
-- `V2__seed.sql`: os 6 clonemons e os 12 golpes do jogo original.
+- `V2__seed.sql`: os 6 clonemons e os 12 golpes do jogo original (ids 1 a 6 e 1 a 12).
+- `V4__new_species.sql`: 6 clonemons novos, um por elemento (Boto, PaoDeAcucar, Pimentinha, Pinguim, Abacaxi e Gatonet, ids 7 a 12), com 2 golpes cada (ids 101 a 112).
+  Os iniciais continuam sendo só os 6 originais; os novos aparecem como selvagens.
 
 O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com o schema, nunca o altera.
 

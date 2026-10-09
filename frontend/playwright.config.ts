@@ -5,6 +5,9 @@ const backend = win
   ? 'backend\\mvnw.cmd -q -f backend\\pom.xml spring-boot:test-run -Dspring-boot.run.main-class=br.clonemon.TestClonemonApplication'
   : './backend/mvnw -q -f backend/pom.xml spring-boot:test-run -Dspring-boot.run.main-class=br.clonemon.TestClonemonApplication';
 
+/** E2E_BASE_URL aponta para um jogo ja no ar (container local ou o deploy); entao nada e iniciado aqui. */
+const target = process.env.E2E_BASE_URL;
+
 /**
  * E2E contra o jogo de verdade: backend com Postgres via Testcontainers (precisa do Docker)
  * e o servidor do Vite. Reaproveita servidores ja rodando fora da CI.
@@ -16,11 +19,11 @@ export default defineConfig({
   timeout: 180_000,
   outputDir: 'test-results',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: target ?? 'http://localhost:5173',
     channel: process.env.PW_CHANNEL ?? (win ? 'msedge' : undefined),
     viewport: { width: 960, height: 640 },
   },
-  webServer: [
+  webServer: target ? [] : [
     {
       command: backend,
       cwd: '..',

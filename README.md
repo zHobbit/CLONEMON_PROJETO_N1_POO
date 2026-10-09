@@ -77,6 +77,16 @@ Depois, o frontend como acima.
 
 Em produção, defina `JWT_SECRET` (pelo menos 32 bytes).
 
+### Igual à produção (Docker)
+
+A mesma imagem do deploy, com jogo e API juntos em http://localhost:8081:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Para publicar na internet, veja [docs/deploy.md](docs/deploy.md).
+
 ## Testes
 
 ```bash
@@ -99,6 +109,7 @@ cd frontend && npm run test:e2e
 
 - [Arquitetura, API e testes](docs/architecture.md)
 - [Banco de dados e diagrama ER](docs/database.md)
+- [Deploy (Render + Neon)](docs/deploy.md)
 
 ## Stack
 

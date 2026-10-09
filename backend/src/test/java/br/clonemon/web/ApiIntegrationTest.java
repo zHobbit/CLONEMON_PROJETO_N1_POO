@@ -96,6 +96,15 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void gamePageIsPublic() {
+        // "/" encaminha para o index.html (o MockMvc nao segue o forward, entao conferimos as duas etapas).
+        assertThat(mvc.get().uri("/").exchange()).hasStatusOk().hasForwardedUrl("index.html");
+        MvcTestResult page = mvc.get().uri("/index.html").exchange();
+        assertThat(page).hasStatusOk();
+        assertThat(page).bodyText().contains("CLONEMON test page");
+    }
+
+    @Test
     void protectedEndpointsRequireToken() {
         assertThat(mvc.get().uri("/api/team")).hasStatus(HttpStatus.UNAUTHORIZED);
         assertThat(mvc.post().uri("/api/battles")).hasStatus(HttpStatus.UNAUTHORIZED);

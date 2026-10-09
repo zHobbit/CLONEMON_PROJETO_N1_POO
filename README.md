@@ -29,10 +29,10 @@ E estes 6 só aparecem na natureza (vença para recrutar):
 | Clonemon | Tipo | O que é | Golpes |
 |---|---|---|---|
 | Boto | ÁGUA | O boto cor-de-rosa da lenda, de chapéu branco | Esguicho, Pororoca |
-| PaoDeAcucar | ROCHA | O morro do Rio como pão doce, com confeitos e bondinho | Pedra no sapato, Bondinho |
+| PaoDeAcucar | ROCHA | O morro do Rio como pão doce, com confeitos e bondinho | Pedra portuguesa, Bondinho |
 | Pimentinha | FOGO | Pimenta dedo-de-moça levada, com o rabo pegando fogo | Ardidinha, Pimenta nos olhos |
 | Pinguim | GELO | O pinguim de louça de cima da geladeira | Ímã de geladeira, Fecha a geladeira |
-| Abacaxi | GRAMA | Abacaxi casca grossa, de poucos amigos | Casca grossa, Descascar o abacaxi |
+| Abacaxi | GRAMA | Abacaxi casca grossa, de poucos amigos | Coroada, Descascar o abacaxi |
 | Gatonet | RAIO | Um "gato" de luz em forma de gato, com rabo de fio | Gambiarra, Apagão |
 
 Os tipos funcionam em ciclo: cada um causa o dobro de dano no seguinte e metade no anterior.

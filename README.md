@@ -41,7 +41,12 @@ O progresso é salvo a cada turno: dá para fechar o navegador no meio de uma ba
 
 ## Rodando localmente
 
-Requisitos: Java 21+, Node 22+ e Docker.
+**Só quer jogar (Windows)?** Com o Docker Desktop aberto, dê dois cliques em [`jogar.cmd`](jogar.cmd).
+Ele sobe tudo e abre o jogo em http://localhost:8081. A primeira vez demora alguns minutos.
+
+> Abrir o `index.html` direto do disco não funciona: o navegador bloqueia o jogo fora de um servidor.
+
+Para desenvolver: Java 21+, Node 22+ e Docker.
 
 ### Jeito rápido (banco temporário)
 

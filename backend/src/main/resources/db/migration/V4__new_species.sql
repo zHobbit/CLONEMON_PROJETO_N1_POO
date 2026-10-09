@@ -1,17 +1,18 @@
--- 6 clonemons novos, um por elemento, com 2 golpes cada (ids de golpe a partir de 101).
+-- 6 clonemons novos, um por elemento, com 2 golpes cada.
+-- Golpes com ids a partir de 201, para nao colidir com os golpes aprendidos por nivel (101 em diante).
 insert into move (id, name, element, power, accuracy, max_pp) values
-    (101, 'Esguicho',            'AGUA',  40, 100, 25),
-    (102, 'Pororoca',            'AGUA',  90,  85, 10),
-    (103, 'Pedra no sapato',     'ROCHA', 40, 100, 25),
-    (104, 'Bondinho',            'ROCHA', 90,  85, 10),
-    (105, 'Ardidinha',           'FOGO',  40, 100, 25),
-    (106, 'Pimenta nos olhos',   'FOGO',  90,  85, 10),
-    (107, 'Ima de geladeira',    'GELO',  40, 100, 25),
-    (108, 'Fecha a geladeira',   'GELO',  90,  85, 10),
-    (109, 'Casca grossa',        'GRAMA', 40, 100, 25),
-    (110, 'Descascar o abacaxi', 'GRAMA', 90,  85, 10),
-    (111, 'Gambiarra',           'RAIO',  40, 100, 25),
-    (112, 'Apagao',              'RAIO',  90,  85, 10);
+    (201, 'Esguicho',            'AGUA',  40, 100, 25),
+    (202, 'Pororoca',            'AGUA',  90,  85, 10),
+    (203, 'Pedra portuguesa',    'ROCHA', 40, 100, 25),
+    (204, 'Bondinho',            'ROCHA', 90,  85, 10),
+    (205, 'Ardidinha',           'FOGO',  40, 100, 25),
+    (206, 'Pimenta nos olhos',   'FOGO',  90,  85, 10),
+    (207, 'Ima de geladeira',    'GELO',  40, 100, 25),
+    (208, 'Fecha a geladeira',   'GELO',  90,  85, 10),
+    (209, 'Coroada',             'GRAMA', 40, 100, 25),
+    (210, 'Descascar o abacaxi', 'GRAMA', 90,  85, 10),
+    (211, 'Gambiarra',           'RAIO',  40, 100, 25),
+    (212, 'Apagao',              'RAIO',  90,  85, 10);
 
 insert into species (id, name, element, base_hp, base_atk, base_def, base_spd) values
     (7,  'Boto',        'AGUA',  46, 52, 45, 70),
@@ -22,9 +23,9 @@ insert into species (id, name, element, base_hp, base_atk, base_def, base_spd) v
     (12, 'Gatonet',     'RAIO',  40, 60, 38, 80);
 
 insert into species_move (species_id, slot, move_id) values
-    (7,  0, 101), (7,  1, 102),
-    (8,  0, 103), (8,  1, 104),
-    (9,  0, 105), (9,  1, 106),
-    (10, 0, 107), (10, 1, 108),
-    (11, 0, 109), (11, 1, 110),
-    (12, 0, 111), (12, 1, 112);
+    (7,  0, 201), (7,  1, 202),
+    (8,  0, 203), (8,  1, 204),
+    (9,  0, 205), (9,  1, 206),
+    (10, 0, 207), (10, 1, 208),
+    (11, 0, 209), (11, 1, 210),
+    (12, 0, 211), (12, 1, 212);

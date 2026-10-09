@@ -36,6 +36,13 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # A mesma imagem que o Render publica.
+      - run: docker build -t clonemon .
+
   e2e:
     needs: [backend, frontend]
     runs-on: ubuntu-latest

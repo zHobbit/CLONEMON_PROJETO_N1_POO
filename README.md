@@ -116,3 +116,5 @@ Projeto original de POO (UAM, Ciência da Computação), sob orientação do Pro
 - Victor Holanda de Oliveira
 - Lucas Sousa Ferreira dos Santos
 - Gabriel Alves Memoli
+
+A versão original, de console, continua em [`legacy/`](legacy/) para comparação.

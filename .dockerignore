@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/target
+**/test-results
+**/playwright-report
+.git
+.github
+.claude
+.agents
+docs
+legacy
+*.md

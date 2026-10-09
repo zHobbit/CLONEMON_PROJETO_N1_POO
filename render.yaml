@@ -1,0 +1,22 @@
+# Blueprint do Render: um servico web gratuito com a imagem do Dockerfile (jogo + API).
+# O banco fica no Neon (Postgres gratuito, nao expira); veja docs/deploy.md.
+services:
+  - type: web
+    name: clonemon
+    runtime: docker
+    plan: free
+    # Sem regiao na America do Sul; a Neon deve ficar na mesma (AWS US East / N. Virginia).
+    region: virginia
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/species
+    # So publica commits do main que passaram no CI.
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false

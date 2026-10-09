@@ -41,7 +41,8 @@ async function start(): Promise<void> {
     game.scene.start(SCENES.login, { message: 'Sua sessao expirou. Entre novamente.' });
   };
 
-  if (import.meta.env.DEV) (window as unknown as { __clonemon: unknown }).__clonemon = { game };
+  // Usado pelos testes E2E, inclusive contra o deploy. Nao da para trapacear: o servidor decide tudo.
+  (window as unknown as { __clonemon: unknown }).__clonemon = { game };
 }
 
 void start();

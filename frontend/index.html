@@ -4,8 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CLONEMON</title>
+    <style>
+      /* Aviso para quem abre o arquivo direto do disco (file://), onde o navegador bloqueia o jogo.
+         Fica invisivel por 1,5 s; se o jogo carregar, o main.ts remove o aviso antes disso. */
+      #boot-hint {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-content: center;
+        gap: 12px;
+        padding: 24px;
+        color: #ffffff;
+        background: #181425;
+        font: 16px/1.5 system-ui, sans-serif;
+        text-align: center;
+        opacity: 0;
+        animation: boot-hint-show 0s 1.5s forwards;
+      }
+      #boot-hint code {
+        padding: 2px 6px;
+        background: #3a4466;
+      }
+      @keyframes boot-hint-show {
+        to { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-hint">
+      <strong>O CLONEMON precisa ser aberto por um servidor, não direto do arquivo.</strong>
+      <span>No Windows: dê dois cliques em <code>jogar.cmd</code>, na pasta do projeto.</span>
+      <span>Ou rode <code>docker compose --profile app up -d --build</code> e abra <code>http://localhost:8081</code>.</span>
+    </div>
     <main id="app">
       <div id="game"></div>
       <form id="login" class="overlay" hidden novalidate>

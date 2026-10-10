@@ -6,11 +6,11 @@ import static br.clonemon.domain.MoveEffect.inflict;
 import static br.clonemon.domain.MoveEffect.lower;
 import static br.clonemon.domain.MoveEffect.raise;
 
-/** Fixture com todos os clonemons (espelha V2__seed.sql, V3__battle_content.sql e V4__new_species.sql). */
+/** Fixture com todos os clonemons (espelha as migrations V2 a V5). */
 public final class Catalog {
     private Catalog() {}
 
-    /** Os dois golpes originais no nivel 1 e os novos nos niveis 7 e 12. */
+    /** Os dois primeiros golpes no nivel 1 e os outros nos niveis 7 e 12. */
     private static final List<Integer> LEARN_LEVELS = List.of(1, 1, 7, 12);
 
     public static final Species LINDOYA = new Species(1, "Lindoya", Element.AGUA, 44, 48, 65, 43,
@@ -38,19 +38,31 @@ public final class Catalog {
                     new Move("Conta de luz", Element.RAIO, 0, 90, 15, lower(Stat.DEF, 2, 100)),
                     new Move("Dedo na tomada", Element.RAIO, 80, 95, 10, inflict(StatusCondition.PARALYSIS, 30))), LEARN_LEVELS);
 
-    // V4: um clonemon novo por elemento.
+    // V4: um clonemon novo por elemento; V5: os golpes dos niveis 7 e 12.
     public static final Species BOTO = new Species(7, "Boto", Element.AGUA, 46, 52, 45, 70,
-            List.of(new Move("Esguicho", Element.AGUA, 40, 100, 25), new Move("Pororoca", Element.AGUA, 90, 85, 10)));
+            List.of(new Move("Esguicho", Element.AGUA, 40, 100, 25), new Move("Pororoca", Element.AGUA, 90, 85, 10),
+                    new Move("Papo de boto", Element.AGUA, 0, 100, 15, lower(Stat.DEF, 2, 100)),
+                    new Move("Rodamoinho", Element.AGUA, 80, 90, 10, lower(Stat.SPD, 1, 30))), LEARN_LEVELS);
     public static final Species PAO_DE_ACUCAR = new Species(8, "PaoDeAcucar", Element.ROCHA, 60, 50, 80, 22,
-            List.of(new Move("Pedra portuguesa", Element.ROCHA, 40, 100, 25), new Move("Bondinho", Element.ROCHA, 90, 85, 10)));
+            List.of(new Move("Pedra portuguesa", Element.ROCHA, 40, 100, 25), new Move("Bondinho", Element.ROCHA, 90, 85, 10),
+                    new Move("Cobertura extra", Element.ROCHA, 0, 100, 20, raise(Stat.DEF, 2)),
+                    new Move("Morro abaixo", Element.ROCHA, 85, 90, 10, lower(Stat.DEF, 1, 30))), LEARN_LEVELS);
     public static final Species PIMENTINHA = new Species(9, "Pimentinha", Element.FOGO, 32, 70, 35, 72,
-            List.of(new Move("Ardidinha", Element.FOGO, 40, 100, 25), new Move("Pimenta nos olhos", Element.FOGO, 90, 85, 10)));
+            List.of(new Move("Ardidinha", Element.FOGO, 40, 100, 25), new Move("Pimenta nos olhos", Element.FOGO, 90, 85, 10),
+                    new Move("Molho de pimenta", Element.FOGO, 60, 100, 15, inflict(StatusCondition.BURN, 30)),
+                    new Move("Malagueta", Element.FOGO, 85, 90, 10, inflict(StatusCondition.BURN, 30))), LEARN_LEVELS);
     public static final Species PINGUIM = new Species(10, "Pinguim", Element.GELO, 52, 48, 68, 38,
-            List.of(new Move("Ima de geladeira", Element.GELO, 40, 100, 25), new Move("Fecha a geladeira", Element.GELO, 90, 85, 10)));
+            List.of(new Move("Ima de geladeira", Element.GELO, 40, 100, 25), new Move("Fecha a geladeira", Element.GELO, 90, 85, 10),
+                    new Move("Escorregao", Element.GELO, 0, 100, 15, lower(Stat.SPD, 2, 100)),
+                    new Move("Congelador", Element.GELO, 75, 95, 10, inflict(StatusCondition.FREEZE, 20))), LEARN_LEVELS);
     public static final Species ABACAXI = new Species(11, "Abacaxi", Element.GRAMA, 52, 58, 62, 35,
-            List.of(new Move("Coroada", Element.GRAMA, 40, 100, 25), new Move("Descascar o abacaxi", Element.GRAMA, 90, 85, 10)));
+            List.of(new Move("Coroada", Element.GRAMA, 40, 100, 25), new Move("Descascar o abacaxi", Element.GRAMA, 90, 85, 10),
+                    new Move("Folha da coroa", Element.GRAMA, 60, 100, 15, lower(Stat.DEF, 1, 30)),
+                    new Move("Sono pos almoco", Element.GRAMA, 0, 75, 10, inflict(StatusCondition.SLEEP, 100))), LEARN_LEVELS);
     public static final Species GATONET = new Species(12, "Gatonet", Element.RAIO, 40, 60, 38, 80,
-            List.of(new Move("Gambiarra", Element.RAIO, 40, 100, 25), new Move("Apagao", Element.RAIO, 90, 85, 10)));
+            List.of(new Move("Gambiarra", Element.RAIO, 40, 100, 25), new Move("Apagao", Element.RAIO, 90, 85, 10),
+                    new Move("Fio desencapado", Element.RAIO, 60, 100, 15, inflict(StatusCondition.PARALYSIS, 30)),
+                    new Move("Sete vidas", Element.RAIO, 0, 100, 10, raise(Stat.DEF, 2))), LEARN_LEVELS);
 
     public static final List<Species> ALL = List.of(LINDOYA, COISO, LUCIFER, OLAF, GROOT, ELETROPAULO,
             BOTO, PAO_DE_ACUCAR, PIMENTINHA, PINGUIM, ABACAXI, GATONET);

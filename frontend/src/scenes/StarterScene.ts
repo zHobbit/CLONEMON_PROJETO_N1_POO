@@ -34,7 +34,7 @@ export class StarterScene extends Phaser.Scene {
     addFrame(this, 30, 0, WIDTH - 60, 15);
     addText(this, WIDTH / 2, 4, 'ESCOLHA SEU CLONEMON!').setOrigin(0.5, 0);
 
-    const species = catalog.all();
+    const species = catalog.starters();
     this.highlight = this.add.graphics();
     species.forEach((s, i) => {
       const { x, y } = cell(i);

@@ -118,9 +118,24 @@ class ApiIntegrationTest {
         MvcTestResult r = mvc.get().uri("/api/species").exchange();
         assertThat(r).hasStatusOk();
         List<String> names = read(r, "$[*].name");
-        assertThat(names).containsExactly("Lindoya", "Coiso", "Lucifer", "Olaf", "Groot", "EletroPaulo");
+        assertThat(names).containsExactly("Lindoya", "Coiso", "Lucifer", "Olaf", "Groot", "EletroPaulo",
+                "Boto", "PaoDeAcucar", "Pimentinha", "Pinguim", "Abacaxi", "Gatonet");
         List<Object> moves = read(r, "$[0].moves");
-        assertThat(moves).hasSize(2);
+        assertThat(moves).hasSize(4);
+    }
+
+    @Test
+    void speciesMovesExposeLearnLevelAndEffect() {
+        MvcTestResult r = mvc.get().uri("/api/species").exchange();
+        List<Integer> levels = read(r, "$[2].moves[*].learnLevel");
+        assertThat(levels).containsExactly(1, 1, 7, 12);
+        Map<String, Object> churrasco = read(r, "$[2].moves[2]");
+        assertThat(churrasco).containsEntry("name", "Churrasco grego").containsEntry("effect", "BURN")
+                .containsEntry("effectChance", 30).containsEntry("effectStat", null).containsEntry("ppLeft", null);
+        Map<String, Object> sangue = read(r, "$[2].moves[3]");
+        assertThat(sangue).containsEntry("power", 0).containsEntry("effect", "RAISE")
+                .containsEntry("effectStat", "ATK").containsEntry("effectStages", 2);
+        assertThat((String) read(r, "$[0].moves[0].effect")).isEqualTo("NONE");
     }
 
     // --- Team ---
@@ -202,6 +217,30 @@ class ApiIntegrationTest {
         MvcTestResult healed = post("/api/team/heal", token, "");
         Integer maxHp = read(healed, "$.team[0].maxHp");
         assertThat(healed).bodyJson().extractingPath("$.team[0].currentHp").isEqualTo(maxHp);
+    }
+
+    @Test
+    void battleExposesStatusOfEachCombatantAndEvent() {
+        String token = trainerWithStarter(3);
+        MvcTestResult started = post("/api/battles", token, "");
+        assertThat(started).hasStatus(HttpStatus.CREATED);
+        assertThat(started).bodyJson().extractingPath("$.enemy.status").isEqualTo("NONE");
+        assertThat(started).bodyJson().extractingPath("$.playerTeam[0].status").isEqualTo("NONE");
+        List<String> effects = read(started, "$.playerTeam[0].moves[*].effect");
+        assertThat(effects).containsExactly("NONE", "NONE");
+
+        Integer battleId = read(started, "$.id");
+        String turns = "/api/battles/" + battleId + "/turns";
+        assertThat(post(turns, token, "{\"action\":\"MOVE\",\"moveIndex\":2}"))
+                .as("o inicial no nivel 5 ainda nao aprendeu o terceiro golpe").hasStatus(HttpStatus.BAD_REQUEST);
+
+        MvcTestResult turn = post(turns, token, "{\"action\":\"MOVE\",\"moveIndex\":0}");
+        assertThat(turn).hasStatusOk();
+        List<String> playerStatuses = read(turn, "$.events[*].playerStatus");
+        List<String> enemyStatuses = read(turn, "$.events[*].enemyStatus");
+        assertThat(playerStatuses).isNotEmpty().allMatch(s -> List.of("NONE", "BURN", "FREEZE", "PARALYSIS", "SLEEP").contains(s));
+        assertThat(enemyStatuses).hasSameSizeAs(playerStatuses);
+        assertThat((String) read(turn, "$.battle.enemy.status")).isNotNull();
     }
 
     /** Usa o primeiro golpe com PP do monstro ativo; foge se nao houver nenhum. */

@@ -45,10 +45,12 @@ Os tipos funcionam em ciclo: cada um causa o dobro de dano no seguinte e metade 
 
 ## Como jogar
 
-1. Crie um treinador e escolha seu primeiro clonemon.
-2. Em **LUTAR** você enfrenta um clonemon selvagem de nível parecido com o do seu time.
+1. Crie um treinador e escolha seu primeiro clonemon. Você começa na Vila Capim, na porta de casa.
+2. Ande pelo mapa com as setas. No capim alto da Rota 1 aparecem clonemons selvagens de nível parecido com o do seu time.
 3. Vencer dá XP e o clonemon derrotado entra para o seu time (ou vai para o PC, se o time estiver cheio).
-4. Em **TIME** você organiza a ordem e troca monstros entre o time e o PC. Em **CURAR** o time recupera HP e PP.
+4. Os treinadores CAIO, BIA e ZECA vigiam a rota: quem cruza a linha de visão deles é desafiado (e não dá para fugir).
+5. No **Centro Clonemon** (o prédio de telhado vermelho) o time recupera HP e PP. Enter lê placas e conversa.
+6. Enter sem nada à frente, ou Esc, abre o menu: em **TIME** você organiza a ordem e troca monstros entre o time e o PC.
 
 O progresso é salvo a cada turno: dá para fechar o navegador no meio de uma batalha e continuar depois.
 

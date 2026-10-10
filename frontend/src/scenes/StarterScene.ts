@@ -69,7 +69,7 @@ export class StarterScene extends Phaser.Scene {
       try {
         const starter = await api.chooseStarter(s.id);
         await this.textBox.sayAndWait(`Voce escolheu ${starter.species.toUpperCase()}! Cuide bem dele.`);
-        fadeTo(this, SCENES.hub);
+        fadeTo(this, SCENES.world);
       } catch {
         await this.textBox.sayAndWait('Nao foi possivel escolher. Tente de novo.');
       }

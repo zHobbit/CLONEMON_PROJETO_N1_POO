@@ -6,11 +6,11 @@ import { COLORS, FONT_FAMILY, HEIGHT, SCENES, WIDTH } from './config';
 import { installTransitions } from './fx/transitions';
 import { BattleScene } from './scenes/BattleScene';
 import { BootScene } from './scenes/BootScene';
-import { HubScene } from './scenes/HubScene';
 import { LoginScene } from './scenes/LoginScene';
 import { StarterScene } from './scenes/StarterScene';
 import { TeamScene } from './scenes/TeamScene';
 import { TitleScene } from './scenes/TitleScene';
+import { WorldScene } from './scenes/WorldScene';
 import { api } from './services';
 
 /** Maior fator inteiro que cabe na janela: pixels sempre do mesmo tamanho. */
@@ -35,7 +35,7 @@ async function start(): Promise<void> {
     pixelArt: true,
     backgroundColor: COLORS.page,
     scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
-    scene: [BootScene, TitleScene, LoginScene, StarterScene, HubScene, TeamScene, BattleScene],
+    scene: [BootScene, TitleScene, LoginScene, StarterScene, WorldScene, TeamScene, BattleScene],
     // Musica e efeitos vem do motor proprio (src/audio); o som do Phaser criaria outro AudioContext a toa.
     audio: { noAudio: true },
   });

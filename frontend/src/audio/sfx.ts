@@ -1,7 +1,7 @@
 import { noteToFreq } from './notes';
 import type { Tone, Wave } from './sequencer';
 
-export type SfxName = 'cursor' | 'confirm' | 'cancel' | 'text' | 'hit' | 'strongHit' | 'faint' | 'heal' | 'levelUp';
+export type SfxName = 'cursor' | 'confirm' | 'cancel' | 'text' | 'hit' | 'strongHit' | 'faint' | 'heal' | 'levelUp' | 'bump' | 'alert';
 
 const note = (wave: Wave, name: string, start: number, dur: number, vol: number, sustain = 0.6): Tone => ({
   wave, from: noteToFreq(name), start, dur, vol, sustain,
@@ -44,4 +44,8 @@ export const SFX: Readonly<Record<SfxName, readonly Tone[]>> = {
     note('pulse12', 'E6', 0.24, 0.36, 0.18, 0.4),
     note('triangle', 'C4', 0.24, 0.36, 0.6, 0.6),
   ],
+  // Esbarrou numa parede no mapa: um baque curto e grave.
+  bump: [{ wave: 'pulse50', from: 120, to: 70, start: 0, dur: 0.08, vol: 0.35, sustain: 0.2 }],
+  // Um treinador viu o jogador: duas notas agudas junto com o balao de exclamacao.
+  alert: [note('pulse25', 'E6', 0, 0.06, 0.4), note('pulse25', 'B6', 0.06, 0.14, 0.4)],
 };

@@ -83,7 +83,7 @@ class TrainerBattleTest {
 
         List<Monster> again = Catalog.ZECA.freshTeam();
         assertThat(again).extracting(Monster::species).containsExactly(Catalog.PAO_DE_ACUCAR, Catalog.PINGUIM, Catalog.LUCIFER);
-        assertThat(again).extracting(Monster::level).containsExactly(9, 10, 11);
+        assertThat(again).extracting(Monster::level).containsExactly(8, 9, 10);
         assertThat(again).allMatch(m -> m.currentHp() == m.maxHp());
     }
 

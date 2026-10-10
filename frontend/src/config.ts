@@ -32,7 +32,7 @@ export const SCENES = {
   title: 'Title',
   login: 'Login',
   starter: 'Starter',
-  hub: 'Hub',
+  world: 'World',
   team: 'Team',
   battle: 'Battle',
 } as const;

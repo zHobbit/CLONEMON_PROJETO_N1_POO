@@ -48,14 +48,22 @@ public class Battle {
     private int enemyActive;
     private Status status;
     private final List<String> log;
+    /** Nome do treinador adversario; nulo numa batalha contra clonemon selvagem. */
+    private final String opponentName;
 
+    /** Batalha contra um clonemon selvagem. */
     public Battle(List<Monster> playerTeam, List<Monster> enemyTeam, DamageCalculator calc, AiStrategy ai) {
-        this(playerTeam, enemyTeam, firstAlive(playerTeam), 0, Status.AWAITING_ACTION, List.of(), calc, ai);
+        this(playerTeam, enemyTeam, null, calc, ai);
+    }
+
+    /** Com {@code opponentName}, e contra um treinador: nao da para fugir e ele anuncia cada monstro que envia. */
+    public Battle(List<Monster> playerTeam, List<Monster> enemyTeam, String opponentName, DamageCalculator calc, AiStrategy ai) {
+        this(playerTeam, enemyTeam, firstAlive(playerTeam), 0, Status.AWAITING_ACTION, List.of(), opponentName, calc, ai);
         if (enemyTeam.isEmpty()) throw new IllegalArgumentException("Enemy team empty");
     }
 
     private Battle(List<Monster> playerTeam, List<Monster> enemyTeam, int playerActive, int enemyActive,
-                   Status status, List<String> log, DamageCalculator calc, AiStrategy ai) {
+                   Status status, List<String> log, String opponentName, DamageCalculator calc, AiStrategy ai) {
         if (playerActive < 0) throw new IllegalArgumentException("Player team has no usable monster");
         this.playerTeam = List.copyOf(playerTeam);
         this.enemyTeam = List.copyOf(enemyTeam);
@@ -63,14 +71,21 @@ public class Battle {
         this.enemyActive = enemyActive;
         this.status = status;
         this.log = new ArrayList<>(log);
+        this.opponentName = opponentName;
         this.calc = calc;
         this.ai = ai;
     }
 
     public static Battle restore(State s, DamageCalculator calc, AiStrategy ai) {
+        return restore(s, null, calc, ai);
+    }
+
+    /** O nome do adversario nao faz parte do {@link State}: quem persiste a batalha guarda de quem ela e. */
+    public static Battle restore(State s, String opponentName, DamageCalculator calc, AiStrategy ai) {
         if (s.playerActive() >= s.playerTeam().size() || s.enemyActive() < 0 || s.enemyActive() >= s.enemyTeam().size())
             throw new IllegalArgumentException("Active index out of range");
-        return new Battle(s.playerTeam(), s.enemyTeam(), s.playerActive(), s.enemyActive(), s.status(), s.log(), calc, ai);
+        return new Battle(s.playerTeam(), s.enemyTeam(), s.playerActive(), s.enemyActive(), s.status(), s.log(),
+                opponentName, calc, ai);
     }
 
     public State state() {
@@ -82,6 +97,9 @@ public class Battle {
     public List<Monster> playerTeam() { return playerTeam; }
     public List<Monster> enemyTeam() { return enemyTeam; }
     public int playerActiveIndex() { return playerActive; }
+    public int enemyActiveIndex() { return enemyActive; }
+    public String opponentName() { return opponentName; }
+    public boolean isAgainstTrainer() { return opponentName != null; }
     public Monster playerMonster() { return playerTeam.get(playerActive); }
     public Monster enemyMonster() { return enemyTeam.get(enemyActive); }
     public List<String> log() { return Collections.unmodifiableList(log); }
@@ -93,6 +111,7 @@ public class Battle {
 
         switch (action) {
             case Run r -> {
+                if (isAgainstTrainer()) throw new IllegalArgumentException("Nao da para fugir de batalha contra treinador");
                 status = Status.FLED;
                 events.add(event("Voce fugiu!", Effect.FLED));
             }
@@ -277,7 +296,8 @@ public class Battle {
             int next = firstAlive(enemyTeam);
             if (next < 0) { status = Status.PLAYER_WON; events.add(event("Voce venceu!", Effect.WON)); return; }
             enemyActive = next;
-            events.add(event("Oponente enviou " + enemyMonster().species().name() + "!", Effect.ENEMY_SWITCH));
+            String sender = isAgainstTrainer() ? opponentName : "Oponente";
+            events.add(event(sender + " enviou " + enemyMonster().species().name() + "!", Effect.ENEMY_SWITCH));
         }
         if (playerMonster().isFainted()) {
             playerMonster().clearBattleState();

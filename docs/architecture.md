@@ -21,8 +21,8 @@ A camada `infrastructure` implementa as portas definidas em `application`.
 
 | Pacote | Responsabilidade |
 |---|---|
-| `domain` | Regras puras, sem Spring: `Element` (ciclo de tipos), `Monster`, `DamageCalculator`, `ExperienceCurve`, `AiStrategy` e a máquina de estados `Battle`. |
-| `application` | Casos de uso (`AuthService`, `TeamService`, `BattleService`) e as portas (`TrainerRepository`, `MonsterRepository`, `BattleRepository`, `SpeciesCatalog`). |
+| `domain` | Regras puras, sem Spring: `Element` (ciclo de tipos), `Monster`, `DamageCalculator`, `ExperienceCurve`, `AiStrategy`, a máquina de estados `Battle`, `NpcTrainer` e `WorldPosition`. |
+| `application` | Casos de uso (`AuthService`, `TeamService`, `BattleService`, `WorldService`) e as portas (`TrainerRepository`, `MonsterRepository`, `BattleRepository`, `SpeciesCatalog`, `NpcCatalog`, `WorldRepository`). |
 | `infrastructure.persistence` | Entidades JPA e adapters das portas. Os repositórios Spring Data ficam aninhados dentro dos adapters. |
 | `web` | Controllers REST, DTOs (records), erros como ProblemDetail (RFC 9457), segurança JWT. |
 
@@ -64,12 +64,28 @@ sem precisar interpretar o texto.
 | PUT | `/api/team` | Define o time: `{ "monsterIds": [..] }` (1 a 6, na ordem) |
 | POST | `/api/team/starter` | Escolhe o inicial: `{ "speciesId": 3 }` |
 | POST | `/api/team/heal` | Centro Clonemon (fora de batalha) |
-| POST | `/api/battles` | Inicia batalha contra um clonemon selvagem |
+| GET | `/api/world` | Progresso no mapa: `{ "position": { "x", "y", "facing" } \| null, "defeatedNpcs": [..] }` (`position` nula até a primeira gravação) |
+| PUT | `/api/world/position` | Salva a posição: `{ "x": 10, "y": 20, "facing": "UP" }` (x e y de 0 a 199; `UP`, `DOWN`, `LEFT` ou `RIGHT`); 204 |
+| POST | `/api/battles` | Sem corpo: batalha contra um clonemon selvagem. Com `{ "npcId": "caio" }`: desafia um treinador do mapa (404 se não existir, 409 se já foi derrotado) |
 | GET | `/api/battles/active` | Batalha em andamento (404 se não houver) |
 | GET | `/api/battles/{id}` | Estado de uma batalha |
 | POST | `/api/battles/{id}/turns` | `{ "action": "MOVE", "moveIndex": 0 }`, `{ "action": "SWITCH", "teamIndex": 1 }` ou `{ "action": "RUN" }` |
 
-Erros: 400 (entrada inválida), 401 (sem token ou credenciais erradas), 404, 409 (conflito de estado: batalha já em andamento, time desmaiado, turno concorrente).
+Erros: 400 (entrada inválida), 401 (sem token ou credenciais erradas), 404, 409 (conflito de estado: batalha já em andamento, time desmaiado, turno concorrente, NPC já derrotado).
+
+### Treinadores do mapa (NPCs)
+
+| Id | Nome | Time (espécie, nível) |
+|---|---|---|
+| `caio` | CAIO | Coiso 5, Abacaxi 6 |
+| `bia` | BIA | Pimentinha 7, Gatonet 8 |
+| `zeca` | ZECA | PaoDeAcucar 9, Pinguim 10, Lucifer 11 |
+
+- Cada treinador só pode ser derrotado uma vez; o time dele começa sempre novo, com HP e PP cheios.
+- A IA dos treinadores é a gulosa (`AiStrategy.greedy()`); os selvagens continuam escolhendo ao acaso.
+- `RUN` é recusado com 400. Quando o treinador manda o próximo monstro, o evento é `"<NOME> enviou <Especie>!"`.
+- Vencer registra a vitória e termina com o evento `"Voce derrotou <NOME>!"`, sem recrutar ninguém; o XP funciona como contra selvagens. Perder não registra nada.
+- `BattleDto` traz `npcId` e `npcName` (nulos contra selvagem), `enemyTeamSize` (1 contra selvagem) e `enemyActive` (índice do monstro do oponente em campo).
 
 ## Frontend (`frontend/`)
 

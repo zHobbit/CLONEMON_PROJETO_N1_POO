@@ -1,5 +1,5 @@
 import { C } from './palette';
-import { type Mask, PixelCanvas, ellipse, intersect, minus, poly, rect, shift, union } from './raster';
+import { type Mask, PixelCanvas, ellipse, minus, poly, rect, shift, union } from './raster';
 
 /**
  * Arte do mapa de exploracao: ladrilhos 16x16, predios e balao de exclamacao.
@@ -388,14 +388,15 @@ export function drawCenter(): PixelCanvas {
   roofTiles(c, poly([[10, 1], [70, 1], [79, 25], [0, 25]]), [C.salmon, C.red, C.crimson, C.umber]);
   c.fill(rect(0, 23, W, 2), C.crimson);
   c.fill(rect(0, 25, W, 1), C.umber);
-  const emblem = ellipse(40, 13, 7.5, 7.5);
-  c.fill(emblem, C.umber);
+  // Selo branco com um coracao: o simbolo de cura do Centro.
+  c.fill(ellipse(40, 13, 7.5, 7.5), C.umber);
   c.fill(ellipse(40, 13, 6.5, 6.5), C.white);
-  c.fill(intersect(ellipse(40, 13, 4.6, 4.6), rect(0, 0, W, 13)), C.red);
-  c.fill(intersect(ellipse(40, 13, 4.6, 4.6), rect(0, 13, W, H)), C.silver);
-  c.fill(rect(35, 12, 10, 2), C.umber);
-  c.fill(ellipse(40, 13, 2, 2), C.umber);
-  c.fill(ellipse(40, 13, 1.1, 1.1), C.white);
+  const heart = ['.##...##.', '####.####', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'];
+  heart.forEach((row, dy) => {
+    for (let dx = 0; dx < row.length; dx++) if (row[dx] === '#') c.set(36 + dx, 9 + dy, dy >= 4 || dx >= 7 ? C.crimson : C.red);
+  });
+  c.set(37, 10, C.salmon);
+  c.set(38, 9, C.salmon);
   return c;
 }
 

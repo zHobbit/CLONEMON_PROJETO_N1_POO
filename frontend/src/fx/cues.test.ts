@@ -3,7 +3,7 @@ import type { Battle, BattleStatus, Combatant, Element, TurnEvent } from '../api
 import { HEAVY_HIT, beats, turnCues } from './cues';
 
 function mon(element: Element, hp: number, maxHp = 40, level = 5): Combatant {
-  return { monsterId: 1, speciesId: 1, name: element, element, level, currentHp: hp, maxHp, fainted: hp === 0, moves: null };
+  return { monsterId: 1, speciesId: 1, name: element, element, level, currentHp: hp, maxHp, fainted: hp === 0, moves: null, status: 'NONE' };
 }
 
 function battle(team: Combatant[], enemy: Combatant, status: BattleStatus = 'AWAITING_ACTION', playerActive = 0): Battle {
@@ -11,7 +11,7 @@ function battle(team: Combatant[], enemy: Combatant, status: BattleStatus = 'AWA
 }
 
 function ev(effect: TurnEvent['effect'], playerHp: number, enemyHp: number, playerActive = 0): TurnEvent {
-  return { text: '', effect, playerActive, playerHp, enemyHp };
+  return { text: '', effect, playerActive, playerHp, enemyHp, playerStatus: 'NONE', enemyStatus: 'NONE' };
 }
 
 describe('beats', () => {

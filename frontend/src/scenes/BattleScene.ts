@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { ApiError } from '../api/client';
-import type { Battle, Combatant, TurnAction, TurnResponse } from '../api/types';
+import type { Battle, Combatant, StatusCondition, TurnAction, TurnResponse } from '../api/types';
+import { C, PALETTE } from '../art/palette';
 import { BATTLE_BG } from '../art/scenery';
 import { BG, addMonster, elementKey, showMonster } from '../art/textures';
+import { STATUS_BADGE, moveInfo, moveRow } from '../battle/labels';
 import { planTurn, type Side, type Step, type ViewState, viewOf } from '../battle/playback';
-import { SCENES, WIDTH } from '../config';
+import { COLORS, CSS, SCENES, WIDTH } from '../config';
 import { BattleFx } from '../fx/BattleFx';
 import { api } from '../services';
 import { formatHp } from '../ui/hp';
@@ -22,22 +24,34 @@ const ENEMY_POS = { x: BATTLE_BG.enemy.x, y: BATTLE_BG.enemy.y - 20 };
 const PLAYER_POS = { x: BATTLE_BG.player.x, y: BATTLE_BG.player.y - 20 };
 const LUNGE = 8;
 
-/** Nome, tipo, nivel e HP de um lado da batalha. */
+/** Cor do selo de status e da letra sobre ele. */
+const BADGE_STYLE: Record<Exclude<StatusCondition, 'NONE'>, { fill: number; ink: string }> = {
+  BURN: { fill: PALETTE[C.red], ink: CSS.paper },
+  FREEZE: { fill: PALETTE[C.blue], ink: CSS.paper },
+  PARALYSIS: { fill: PALETTE[C.amber], ink: CSS.ink },
+  SLEEP: { fill: PALETTE[C.slate], ink: CSS.paper },
+};
+
+/** Nome, tipo, nivel, HP e selo de status de um lado da batalha. */
 class InfoBox {
   private readonly name: Phaser.GameObjects.Text;
   private readonly type: Phaser.GameObjects.Image;
   private readonly level: Phaser.GameObjects.Text;
   private readonly numbers?: Phaser.GameObjects.Text;
   private readonly bar: HpBar;
+  private readonly badge: Phaser.GameObjects.Graphics;
+  private readonly badgeText: Phaser.GameObjects.Text;
   private max = 1;
 
   constructor(scene: Phaser.Scene, x: number, y: number, w: number, showNumbers: boolean) {
-    addFrame(scene, x, y, w, showNumbers ? 36 : 26);
+    addFrame(scene, x, y, w, 36);
     this.name = addText(scene, x + 6, y + 5, '');
     this.type = scene.add.image(0, y + 3, elementKey('AGUA')).setOrigin(0);
     this.level = addText(scene, x + 6, y + 15, '');
     if (showNumbers) this.numbers = addText(scene, x + w - 6, y + 25, '').setOrigin(1, 0);
     this.bar = new HpBar(scene, x + 42, y + 15, 48, (hp) => this.numbers?.setText(formatHp(hp, this.max)));
+    this.badge = scene.add.graphics().setPosition(x + 6, y + 24);
+    this.badgeText = addText(scene, x + 8, y + 25, '');
   }
 
   show(c: Combatant, hp = c.currentHp): void {
@@ -45,11 +59,25 @@ class InfoBox {
     this.name.setText(c.name.toUpperCase());
     this.type.setTexture(elementKey(c.element)).setX(this.name.x + this.name.width + 3);
     this.level.setText(`Nv${c.level}`);
+    this.setStatus(c.status);
     void this.bar.set(hp, c.maxHp);
   }
 
   setHp(hp: number, animate: boolean): Promise<void> {
     return this.bar.set(hp, this.max, animate);
+  }
+
+  /** Selo de 3 letras no canto de baixo ("QUE", "PAR"...); some sem status. */
+  setStatus(status: StatusCondition): void {
+    this.badge.clear();
+    this.badgeText.setText(STATUS_BADGE[status]);
+    if (status === 'NONE') return;
+    const style = BADGE_STYLE[status];
+    this.badge.fillStyle(COLORS.frame);
+    this.badge.fillRect(0, 0, 28, 10);
+    this.badge.fillStyle(style.fill);
+    this.badge.fillRect(1, 1, 26, 8);
+    this.badgeText.setColor(style.ink);
   }
 }
 
@@ -151,26 +179,31 @@ export class BattleScene extends Phaser.Scene {
     return { action: 'RUN' };
   }
 
+  /** Ate 4 golpes (nome e PP), um por linha; embaixo, tipo, poder, precisao e efeito do selecionado. */
   private async chooseMove(): Promise<TurnAction | null> {
     const moves = this.active().moves ?? [];
-    const panel = addFrame(this, 0, 112, WIDTH, 48);
-    const info = addText(this, 8, 144, '');
+    // Sobe um pouco acima da caixa de texto, ate encostar na caixa de informacoes do jogador.
+    const panel = addFrame(this, 0, 106, WIDTH, 54);
+    const type = this.add.image(12, 145, elementKey(moves[0]?.element ?? 'AGUA')).setOrigin(0);
+    const info = addText(this, 26, 147, '');
     const menu = new Menu(
       this,
-      moves.map((m) => ({
-        label: `${m.name.toUpperCase().padEnd(19)} ${String(m.ppLeft ?? 0).padStart(2)}/${m.maxPp}`,
-        disabled: (m.ppLeft ?? 0) === 0,
-      })),
+      moves.map((m) => ({ label: moveRow(m), disabled: (m.ppLeft ?? 0) === 0 })),
       {
-        x: 4,
-        y: 120,
+        x: 2,
+        y: 110,
+        rowHeight: 9,
         cancellable: true,
-        onHover: (i) => info.setText(`TIPO ${moves[i].element}  POD ${moves[i].power}  PREC ${moves[i].accuracy}`),
+        onHover: (i) => {
+          type.setTexture(elementKey(moves[i].element));
+          info.setText(moveInfo(moves[i]));
+        },
       },
     );
     const choice = await menu.choose();
     menu.destroy();
     panel.destroy();
+    type.destroy();
     info.destroy();
     return choice === null ? null : { action: 'MOVE', moveIndex: choice };
   }
@@ -219,6 +252,14 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'switch':
         return this.switchTo(step.teamIndex, step.hp);
+      case 'status':
+        this.info(step.side).setStatus(step.status);
+        return;
+      case 'stat': {
+        // Sobe ou desce duas vezes, na direcao da mudanca.
+        const s = this.sprite(step.side);
+        return tween(this, { targets: s, y: s.y + (step.up ? -3 : 3), duration: 90, yoyo: true, repeat: 1 });
+      }
     }
   }
 

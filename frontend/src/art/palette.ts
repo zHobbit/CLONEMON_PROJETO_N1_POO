@@ -49,6 +49,14 @@ export const RAMPS = {
   metal: { tones: [C.white, C.silver, C.steel], outline: C.slate },
   cable: { tones: [C.slate, C.ink, C.night], outline: C.black },
   cap: { tones: [C.white, C.silver, C.steel], outline: C.ink },
+  boto: { tones: [C.salmon, C.mauve, C.plum], outline: C.night },
+  botoBelly: { tones: [C.peach, C.salmon], outline: C.mauve },
+  loaf: { tones: [C.peach, C.khaki, C.brown], outline: C.umber },
+  gondola: { tones: [C.red, C.crimson], outline: C.umber },
+  chili: { tones: [C.salmon, C.red, C.crimson], outline: C.umber },
+  feather: { tones: [C.slate, C.ink, C.night], outline: C.black },
+  pineapple: { tones: [C.yellow, C.amber, C.tan], outline: C.darkBrown },
+  cat: { tones: [C.yellow, C.amber, C.orange], outline: C.darkBrown },
 } as const satisfies Record<string, Ramp>;
 
 export function toRgb(index: number): [number, number, number] {

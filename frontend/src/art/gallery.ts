@@ -6,19 +6,37 @@ import { BATTLE_BG, drawBattleBackground, drawMenuTile, drawTitleBackground } fr
 
 /** Pagina de desenvolvimento (/art.html): toda a arte ampliada, para revisao. */
 
-const SPECIES: [string, Element][] = [
+type Entry = [string, Element];
+
+const SPECIES: Entry[] = [
   ['Lindoya', 'AGUA'], ['Coiso', 'ROCHA'], ['Lucifer', 'FOGO'], ['Olaf', 'GELO'], ['Groot', 'GRAMA'], ['EletroPaulo', 'RAIO'],
+  ['Boto', 'AGUA'], ['PaoDeAcucar', 'ROCHA'], ['Pimentinha', 'FOGO'], ['Pinguim', 'GELO'], ['Abacaxi', 'GRAMA'], ['Gatonet', 'RAIO'],
+];
+/** Duplas (inimigo de frente, jogador de costas) montadas na cena de batalha. */
+const BATTLES: [Entry, Entry][] = [
+  [['Lucifer', 'FOGO'], ['Olaf', 'GELO']],
+  [['Gatonet', 'RAIO'], ['Boto', 'AGUA']],
+  [['PaoDeAcucar', 'ROCHA'], ['Pimentinha', 'FOGO']],
+  [['Abacaxi', 'GRAMA'], ['Pinguim', 'GELO']],
+  [['Boto', 'AGUA'], ['Abacaxi', 'GRAMA']],
+  [['Pinguim', 'GELO'], ['Gatonet', 'RAIO']],
+  [['Pimentinha', 'FOGO'], ['PaoDeAcucar', 'ROCHA']],
 ];
 const ZOOM = 4;
 const CELL = SPRITE_SIZE * ZOOM + 8;
 const LEFT = 110;
 const COLUMNS = ['frente 0', 'frente 1', 'costas 0', 'costas 1', 'icone'];
 const SCENE_ZOOM = 3;
+const SCENE_W = BATTLE_BG.width * SCENE_ZOOM;
+const SCENE_H = BATTLE_BG.height * SCENE_ZOOM;
+const SCENE_ROW = SCENE_H + 32;
 
 const canvas = document.getElementById('gallery') as HTMLCanvasElement;
-canvas.width = LEFT + CELL * COLUMNS.length + 60;
+canvas.width = Math.max(LEFT + CELL * COLUMNS.length + 60, 4 + (SCENE_W + 16) * 2);
 const monstersHeight = 24 + CELL * SPECIES.length;
-canvas.height = monstersHeight + 80 + BATTLE_BG.height * SCENE_ZOOM + 24;
+const battlesY = monstersHeight + 40;
+const sceneY = battlesY + Math.ceil(BATTLES.length / 2) * SCENE_ROW + 8;
+canvas.height = sceneY + 320 + 24;
 const ctx = canvas.getContext('2d')!;
 ctx.imageSmoothingEnabled = false;
 ctx.font = '12px monospace';
@@ -60,20 +78,21 @@ SPECIES.forEach(([name, element], row) => {
   blit(drawElementIcon(element), LEFT + 4 * CELL + 136, y, ZOOM);
 });
 
-// Cena de batalha montada com os assets reais, no tamanho do jogo x3.
-const sceneY = monstersHeight + 40;
-label('batalha (x3)', 4, sceneY - 8);
-const battle = toCanvas(drawBattleBackground());
-const bctx = battle.getContext('2d')!;
-const enemy = toCanvas(drawMonster('Lucifer', 'FOGO', 'front', 0));
-const player = toCanvas(drawMonster('Olaf', 'GELO', 'back', 0));
-bctx.drawImage(enemy, BATTLE_BG.enemy.x - 24, BATTLE_BG.enemy.y - 44);
-bctx.drawImage(player, BATTLE_BG.player.x - 24, BATTLE_BG.player.y - 44);
-ctx.drawImage(battle, 4, sceneY, BATTLE_BG.width * SCENE_ZOOM, BATTLE_BG.height * SCENE_ZOOM);
+// Cenas de batalha montadas com os assets reais, no tamanho do jogo x3.
+BATTLES.forEach(([[enemyName, enemyEl], [playerName, playerEl]], i) => {
+  const x = 4 + (i % 2) * (SCENE_W + 16);
+  const y = battlesY + Math.floor(i / 2) * SCENE_ROW;
+  label(`batalha (x3): ${enemyName} x ${playerName}`, x, y - 8);
+  const battle = toCanvas(drawBattleBackground());
+  const bctx = battle.getContext('2d')!;
+  bctx.drawImage(toCanvas(drawMonster(enemyName, enemyEl, 'front', 0)), BATTLE_BG.enemy.x - 24, BATTLE_BG.enemy.y - 44);
+  bctx.drawImage(toCanvas(drawMonster(playerName, playerEl, 'back', 0)), BATTLE_BG.player.x - 24, BATTLE_BG.player.y - 44);
+  ctx.drawImage(battle, x, y, SCENE_W, SCENE_H);
+});
 
-const titleX = 4 + BATTLE_BG.width * SCENE_ZOOM + 16;
-label('titulo (x2)', titleX, sceneY - 8);
-blit(drawTitleBackground(), titleX, sceneY, 2);
-label('menu (x4)', titleX + 500, sceneY - 8);
+label('titulo (x2)', 4, sceneY - 8);
+blit(drawTitleBackground(), 4, sceneY, 2);
+const tileX = 4 + 480 + 32;
+label('menu (x4)', tileX, sceneY - 8);
 const tile = drawMenuTile();
-for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) blit(tile, titleX + 500 + i * 64, sceneY + j * 64, ZOOM);
+for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) blit(tile, tileX + i * 64, sceneY + j * 64, ZOOM);

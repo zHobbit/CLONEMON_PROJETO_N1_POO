@@ -33,8 +33,25 @@ A camada `infrastructure` implementa as portas definidas em `application`.
 ### Eventos de turno
 
 Um turno devolve uma lista de `Battle.Event`. Cada evento tem o texto, um efeito visual (`ENEMY_HIT`, `PLAYER_FAINT`, `PLAYER_SWITCH`…)
-e o HP dos dois monstros ativos logo depois dele. O frontend anima o turno passo a passo comparando esses estados,
+e o HP e o status dos dois monstros ativos logo depois dele. O frontend anima o turno passo a passo comparando esses estados,
 sem precisar interpretar o texto.
+
+### Golpes, status e estágios
+
+- Cada espécie tem até 4 golpes, na ordem em que são aprendidos (`learnLevels`); o monstro conhece os que têm nível de aprendizado menor ou igual ao seu.
+  Ao subir de nível na batalha ele aprende o golpe (evento `MOVE_LEARNED`) com PP cheio.
+- Golpes com poder 0 são de status: só testam a precisão e aplicam o efeito (`MoveEffect`).
+- Status (um por monstro, só durante a batalha; ninguém pega o status do próprio elemento):
+
+| Status | Selo | Regra |
+|---|---|---|
+| `BURN` | QUE | Perde 1/16 do HP máximo no fim do turno; ataque pela metade. |
+| `FREEZE` | CON | Não age; 20% de chance de descongelar a cada turno. |
+| `PARALYSIS` | PAR | 25% de chance de perder a vez; velocidade pela metade. |
+| `SLEEP` | DOR | Não age por 1 a 3 turnos (sorteado ao dormir). |
+
+- Estágios de ATK, DEF e SPD vão de -6 a +6 (multiplicadores clássicos: +1 = 1,5x, -1 = 0,67x…) e zeram quando o monstro sai de campo.
+- Todo sorteio (precisão, crítico, efeitos, sono, descongelar, paralisia) usa o `RandomGenerator` injetado, então os testes são determinísticos.
 
 ## API
 

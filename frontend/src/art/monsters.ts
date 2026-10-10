@@ -1,7 +1,7 @@
 import type { Element } from '../api/types';
 import { C, RAMPS, type Ramp } from './palette';
 import {
-  type Mask, PixelCanvas, ellipse, intersect, line, mirror, poly, shift, superellipse, union,
+  type Mask, PixelCanvas, ellipse, intersect, line, minus, mirror, poly, shift, superellipse, union,
 } from './raster';
 
 export type View = 'front' | 'back';
@@ -23,6 +23,8 @@ interface MonsterArt {
 }
 
 const sym = (m: Mask) => mirror(m, W);
+/** Encolhe a forma em 1px: pinta o miolo sem apagar o contorno ja desenhado. */
+const shrink = (m: Mask): Mask => (x, y) => m(x, y) && m(x - 1, y) && m(x + 1, y) && m(x, y - 1) && m(x, y + 1);
 
 // ---------------------------------------------------------------- Lindoya (AGUA)
 
@@ -230,6 +232,288 @@ const eletropaulo: MonsterArt = {
   },
 };
 
+// ---------------------------------------------------------------- Boto (AGUA)
+
+/** O boto cor-de-rosa da lenda: de chapeu branco para esconder o buraco da cabeca. */
+const boto: MonsterArt = {
+  iconEye: [6, 8],
+  draw(c, view, f) {
+    const front = view === 'front';
+    const body = ellipse(24, 30 + f, 12.5, 14);
+    const form = { cx: 24, cy: 30 + f, rx: 13, ry: 15 };
+    const belly = ellipse(24, 36 + f, 8.5, 7.5);
+    const flippers = sym(poly(f === 0
+      ? [[14, 30], [5, 37], [6, 40], [15, 36]]
+      : [[14, 30], [4, 33], [5, 36], [15, 35]]));
+    const flukes = sym(poly([[24, 40], [14, 41], [9, 45], [12, 46.5], [20, 45.5], [24, 44]]));
+    // De frente o bico aponta para a direita; de costas aparece so a ponta, do outro lado.
+    const beak = front
+      ? poly([[29, 24.5 + f], [37, 26 + f], [42, 27 + f], [44.5, 28.5 + f], [43.5, 30.5 + f], [38, 31.5 + f], [29, 33.5 + f]])
+      : poly([[14, 27 + f], [8, 28 + f], [4, 29.5 + f], [5, 31.5 + f], [14, 32 + f]]);
+    const jaw = poly([[30, 30 + f], [43.5, 29.5 + f], [42, 31 + f], [37, 32 + f], [30, 33.5 + f]]);
+    const crown = superellipse(24, 11 + f, 7, 3.6, 2.6);
+    const brim = ellipse(24, 15 + f, 12.5, 2);
+
+    c.paint(flippers, RAMPS.boto);
+    if (front) {
+      c.paint(flukes, RAMPS.boto, { flat: 2 });
+      c.paint(body, RAMPS.boto, { form });
+      c.paint(belly, RAMPS.botoBelly, { outline: false });
+      c.paint(beak, RAMPS.boto, { flat: 0 });
+      c.paint(shrink(jaw), RAMPS.botoBelly, { outline: false });
+    } else {
+      // De costas o rabo fica na frente do corpo.
+      c.paint(beak, RAMPS.boto);
+      c.paint(body, RAMPS.boto, { form });
+      c.paint(flukes, RAMPS.boto);
+    }
+    c.paint(crown, RAMPS.snow);
+    c.fill(intersect(crown, (_, y) => y >= 12 + f && y < 14 + f), C.night);
+    c.paint(brim, RAMPS.snow);
+    if (c.scale !== 1) return;
+
+    c.stamp(['44'], 23, 8 + f);
+    c.stamp(['6.', '.6'], 14, 19 + f);
+    if (front) {
+      c.stamp(['.00.', '0660', '0600', '0000', '.00.'], 17, 20 + f);
+      c.stamp(['.00.', '0660', '0600', '0000', '.00.'], 24, 20 + f);
+      c.stamp(['0.............', '.0000000000000'], 29, 28 + f);
+      c.stamp(['ss'], 15, 27 + f);
+    }
+  },
+};
+
+// ---------------------------------------------------------------- PaoDeAcucar (ROCHA)
+
+/** O morro do Rio que tambem e um pao doce: cobertura de acucar no topo e o bondinho pendurado. */
+const paodeacucar: MonsterArt = {
+  iconEye: [6, 9],
+  draw(c, view, f) {
+    const front = view === 'front';
+    const body = union(ellipse(24, 23 + f, 9.5, 14 - f * 0.5), ellipse(24, 33, 13, 10.5), superellipse(24, 39.5, 15.5, 5, 3));
+    const form = { cx: 24, cy: 28, rx: 16, ry: 18 };
+    const icing = union(
+      ellipse(24, 12 + f, 12, 5.5),
+      ellipse(16.5, 17 + f, 2, 3), ellipse(21, 18.5 + f, 2, 3.5), ellipse(27.5, 18 + f, 2, 3), ellipse(31.5, 16.5 + f, 1.8, 2.5),
+    );
+    // Mata atlantica no pe do morro.
+    const bushes = sym(union(ellipse(9.5, 42.5, 3.2, 3), ellipse(12.5, 40, 3, 3), ellipse(14, 44, 3, 2)));
+    // Bondinho: cabo saindo do pico e a cabine balancando.
+    const side = front ? 1 : -1;
+    const gx = 24 + side * (17 + f);
+    const cable = line(24 + side * 3, 10 + f, 24 + side * 24, 17, 0.5);
+    const hanger = line(24 + side * 17, 14, gx, 20, 0.5);
+    const cabin = superellipse(gx, 23.5, 3.5, 3, 4);
+
+    c.paint(body, RAMPS.loaf, { form });
+    c.paint(intersect(body, icing), RAMPS.snow, { outline: false, form });
+    c.paint(bushes, RAMPS.leaf);
+    if (c.scale === 1) {
+      c.fill(union(cable, hanger), C.ink);
+      c.paint(cabin, RAMPS.gondola);
+    }
+    if (c.scale !== 1) return;
+
+    // Confeitos coloridos na cobertura.
+    c.stamp([
+      '..........y......',
+      '......r..........',
+      '.............g...',
+      '...B.....m.......',
+      '..............r..',
+      '.y.....B.........',
+    ], 16, 10 + f);
+    c.stamp(['Q6', '66'], gx - 2 + (front ? 0 : 1), 22);
+    c.stamp(['b.', 'b.', '.b'], 33, 29);
+    if (front) {
+      c.stamp(['0000', '0660', '0600', '.00.'], 16, 27 + f, { mirror: true });
+      c.stamp(['0....0', '.0000.'], 21, 33);
+      c.stamp(['ss'], 13, 32, { mirror: true });
+    } else {
+      c.stamp(['.b', 'b.', 'b.', '.b'], 16, 27);
+      c.stamp(['b', 'b'], 27, 34);
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Pimentinha (FOGO)
+
+/** Pimenta dedo-de-moca e menino levado: talo de topete e a ponta enrolada como rabo. */
+const pimentinha: MonsterArt = {
+  iconEye: [6, 8],
+  draw(c, view, f) {
+    const front = view === 'front';
+    // De costas a ponta enrolada aparece do outro lado.
+    const side = front ? 1 : -1;
+    const x = (v: number) => 24 + side * (v - 24);
+    const body = union(
+      ellipse(23.5, 24 + f, 9.5, 9.5 - f * 0.5),
+      ellipse(24, 33, 8.5, 8.5),
+      line(x(29), 38, x(35), 42, 2.6),
+      line(x(35), 42, x(40), 39, 1.8),
+      line(x(40), 39, x(41), 35, 1.3),
+    );
+    const form = { cx: 23, cy: 29, rx: 13, ry: 16 };
+    const feet = union(ellipse(19.5, 43, 2.8, 2), ellipse(26.5, 43.5, 2.8, 2));
+    const calyx = union(
+      ellipse(23.5, 15.5 + f, 6.5, 2.5),
+      poly([[17, 15 + f], [15, 19 + f], [21, 17 + f]]),
+      poly([[30, 15 + f], [32, 19 + f], [26, 17 + f]]),
+      poly([[22, 16 + f], [23.5, 20 + f], [25, 16 + f]]),
+    );
+    const stem = union(line(23.5, 15 + f, 25, 8, 1.4), line(25, 8, 29 + f, 5 + f, 1.1));
+    const arms = union(ellipse(13.5, 31 + f, 2.5, 3), ellipse(34, 29 - f, 2.5, 3));
+    // A ponta do rabo pega fogo (como um pavio).
+    const fx = x(41);
+    const flame = poly(f === 0
+      ? [[fx - 2.5, 35.5], [fx - 2.5, 31], [fx - 1, 32], [fx, 26.5], [fx + 1.5, 31.5], [fx + 2.5, 29.5], [fx + 2.5, 35.5]]
+      : [[fx - 2.5, 35.5], [fx - 2.5, 29], [fx - 1, 31], [fx + 0.5, 27.5], [fx + 1.5, 31], [fx + 2.5, 30.5], [fx + 2.5, 35.5]]);
+
+    c.paint(feet, RAMPS.chili, { flat: 2 });
+    c.paint(body, RAMPS.chili, { form });
+    c.paint(flame, RAMPS.flame);
+    c.paint(arms, RAMPS.chili);
+    c.paint(stem, RAMPS.leaf);
+    c.paint(calyx, RAMPS.leaf);
+    if (c.scale !== 1) return;
+
+    // Brilho de casca lisa.
+    c.stamp(['.6', '6.', '6.'], 16, 20 + f);
+    if (front) {
+      c.stamp(['0.....', '.00...', '..00..', '.0660.', '.0600.', '..00..'], 15, 21 + f);
+      c.stamp(['.....0', '...00.', '..00..', '.0660.', '.0600.', '..00..'], 26, 21 + f);
+      c.stamp(['0........0', '.06666660.', '..000000..'], 19, 30 + f);
+      c.stamp(['ss'], 14, 28 + f);
+      c.stamp(['ss'], 32, 28 + f);
+    } else {
+      c.stamp(['R.', '.R', 'R.'], 25, 31 + f);
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Pinguim (GELO)
+
+/** O pinguim de loucas que mora em cima da geladeira, todo brilhante. */
+const pinguim: MonsterArt = {
+  iconEye: [6, 6],
+  draw(c, view, f) {
+    const front = view === 'front';
+    const head = ellipse(24, 20 + f, 10.5, 9);
+    const body = ellipse(24, 33, 13, 11);
+    const flippers = sym(poly(f === 0
+      ? [[13, 26], [6, 37], [8, 39], [15, 33]]
+      : [[13, 26], [4, 33], [6, 36], [15, 32]]));
+    const feet = sym(ellipse(18.5, 44.5, 4.5, 2));
+    const mask = union(ellipse(24, 34, 9.5, 9.5), sym(ellipse(20.5, 21 + f, 4.5, 5)), ellipse(24, 26 + f, 6, 4));
+
+    c.paint(feet, RAMPS.carrot, { flat: 1 });
+    if (!front) c.paint(poly([[20, 40], [24, 46], [28, 40]]), RAMPS.feather);
+    c.paint(union(head, body), RAMPS.feather);
+    c.paint(flippers, RAMPS.feather);
+    if (front) {
+      c.paint(mask, RAMPS.snow, { outline: false });
+      c.paint(poly([[21, 24 + f], [27, 24 + f], [24, 28 + f]]), RAMPS.carrot);
+    }
+    if (c.scale !== 1) return;
+
+    // Brilho de louca.
+    c.stamp(['.66', '6..', '6..'], 17, 13 + f);
+    if (front) {
+      c.stamp(['.00.', '0660', '0600', '0000', '.00.'], 18, 18 + f, { mirror: true });
+      c.stamp(['ss'], 16, 25 + f, { mirror: true });
+    } else {
+      // Etiqueta de preco esquecida nas costas.
+      c.stamp(['666666', '623326', '666666'], 21, 32);
+      c.stamp(['6'], 34, 30);
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Abacaxi (GRAMA)
+
+/** Abacaxi casca grossa, de coroa espetada e cara de poucos amigos. */
+const abacaxi: MonsterArt = {
+  iconEye: [6, 10],
+  draw(c, view, f) {
+    const front = view === 'front';
+    const body = ellipse(24, 31 + f, 12.5, 12.5);
+    const feet = sym(ellipse(18, 44, 3.5, 2));
+    const arms = sym(ellipse(11, 35 + f, 2.5, 3));
+    const s = f; // a coroa balanca um pouco
+    const crown = union(
+      poly([[21.5, 21 + f], [24 + s, 3], [26.5, 21 + f]]),
+      poly([[20, 21 + f], [15 + s, 6], [24, 19 + f]]),
+      poly([[28, 21 + f], [33 + s, 6], [24, 19 + f]]),
+      poly([[19, 22 + f], [9 + s, 12], [23, 19 + f]]),
+      poly([[29, 22 + f], [39 + s, 12], [25, 19 + f]]),
+    );
+    // Gomos da casca: losangos em diagonal.
+    const diamonds: Mask = (x, y) => (x + y - f) % 6 === 0 || (x - y + f + 60) % 6 === 0;
+
+    c.paint(feet, RAMPS.bark, { flat: 1 });
+    c.paint(arms, RAMPS.pineapple);
+    c.paint(body, RAMPS.pineapple);
+    // De frente os gomos nao passam pela cara.
+    const face = front ? ellipse(24, 31 + f, 9.5, 6) : () => false;
+    if (c.scale === 1) c.fill(minus(intersect(shrink(body), diamonds), face), C.khaki);
+    c.paint(crown, RAMPS.leaf);
+    if (c.scale !== 1) return;
+
+    if (front) {
+      c.stamp(['0000..', '..0000', '..0660', '..0600', '...00.'], 15, 27 + f, { mirror: true });
+      c.stamp(['.....0', '00000.'], 21, 34 + f);
+    }
+  },
+};
+
+// ---------------------------------------------------------------- Gatonet (RAIO)
+
+/** O "gato" de luz em forma de gato: rabo de fio puxado do poste, com garra jacare na ponta. */
+const gatonet: MonsterArt = {
+  iconEye: [5, 7],
+  draw(c, view, f) {
+    const front = view === 'front';
+    const head = ellipse(24, 20 + f, 12, 9.5);
+    const ears = sym(poly([[13, 17 + f], [14, 5 + f], [22, 12 + f]]));
+    const body = union(ellipse(24, 37.5, 10.5, 7.5), ellipse(24, 31.5, 8, 5));
+    // Sentado: patas da frente na frente da barriga (de costas ficam escondidas).
+    const legs = sym(superellipse(20.5, 41.5, 2.6, 3.8, 2.5));
+    const side = front ? 1 : -1;
+    const tx = (v: number) => 24 + side * (v - 24);
+    const tail = union(line(tx(32), 41, tx(40), 40, 1.6), line(tx(40), 40, tx(42 - f), 30, 1.6));
+    const clip = superellipse(tx(42 - f), 27, 2.2, 3, 4);
+
+    if (front) c.paint(tail, RAMPS.cable);
+    if (front) c.paint(clip, RAMPS.gondola);
+    if (!front) c.paint(sym(ellipse(17.5, 44, 3.2, 2)), RAMPS.cat);
+    c.paint(body, RAMPS.cat);
+    if (front) c.paint(legs, RAMPS.cat);
+    c.paint(ears, RAMPS.cat);
+    c.paint(head, RAMPS.cat);
+    if (!front) {
+      c.paint(tail, RAMPS.cable);
+      c.paint(clip, RAMPS.gondola);
+    }
+    if (c.scale !== 1) return;
+
+    // Dentes da garra jacare, faisca e o raio na testa no lugar das listras.
+    c.stamp(['5.5'], tx(42 - f) - 1, 23);
+    if (f === 1) c.stamp(['.y.', 'y6y', '.y.'], tx(41) - 1, 19);
+    c.stamp(['ll.', '.ll'], 16, 35, { mirror: true });
+    c.stamp(['ll.', '.ll'], 16, 39, { mirror: true });
+    if (front) {
+      c.stamp(['..oo', '.oo.', 'oooo', '.oo.', 'oo..'], 22, 11 + f);
+      c.stamp(['s.', 'ss'], 16, 9 + f, { mirror: true });
+      c.stamp(['.00.', '0g60', '0g00', '0gg0', '.00.'], 17, 17 + f, { mirror: true });
+      c.stamp(['..ss..', '0.00.0', '.0..0.'], 21, 24 + f);
+      c.stamp(['ll.', '..l', 'll.'], 9, 22 + f, { mirror: true });
+    } else {
+      c.stamp(['..oo', '.oo.', 'oooo', '.oo.', 'oo..'], 22, 14 + f);
+      c.stamp(['ooo..ooo', '..oooo..'], 20, 31);
+    }
+  },
+};
+
 // ---------------------------------------------------------------- generico
 
 const ELEMENT_RAMP: Record<Element, Ramp> = {
@@ -249,6 +533,7 @@ function generic(element: Element): MonsterArt {
 
 const ART: Record<string, MonsterArt> = {
   lindoya, coiso, lucifer, olaf, groot, eletropaulo,
+  boto, paodeacucar, pimentinha, pinguim, abacaxi, gatonet,
 };
 
 function artFor(name: string, element: Element): MonsterArt {

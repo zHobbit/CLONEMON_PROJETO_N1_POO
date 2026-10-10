@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Monster, Roster } from '../api/types';
 import { addMenuBackground } from '../art/textures';
 import { SCENES } from '../config';
+import { fadeTo } from '../fx/transitions';
 import { api } from '../services';
 import { type TeamAction, allMonsters, applyAction, availableActions, teamIds } from '../team/teamOps';
 import { onKey } from '../ui/input';
@@ -45,7 +46,7 @@ export class TeamScene extends Phaser.Scene {
     for (;;) {
       const monster = await this.browse();
       if (!monster) {
-        this.scene.start(SCENES.hub, { roster: this.roster });
+        fadeTo(this, SCENES.hub, { roster: this.roster });
         return;
       }
       const actions = availableActions(this.roster, monster.id);

@@ -3,6 +3,7 @@ import { ApiError } from '../api/client';
 import type { Roster } from '../api/types';
 import { addMenuBackground } from '../art/textures';
 import { SCENES } from '../config';
+import { battleTransition, fadeTo } from '../fx/transitions';
 import { api } from '../services';
 import { Menu } from '../ui/Menu';
 import { MonsterRows } from '../ui/MonsterRows';
@@ -57,11 +58,14 @@ export class HubScene extends Phaser.Scene {
 
       try {
         switch (MENU[cursor]) {
-          case 'LUTAR':
-            this.scene.start(SCENES.battle, { battle: await api.startBattle() });
+          case 'LUTAR': {
+            const battle = await api.startBattle();
+            await battleTransition(this);
+            this.scene.start(SCENES.battle, { battle });
             return;
+          }
           case 'TIME':
-            this.scene.start(SCENES.team, { roster: this.roster });
+            fadeTo(this, SCENES.team, { roster: this.roster });
             return;
           case 'CURAR':
             this.show(await api.heal());
@@ -69,7 +73,7 @@ export class HubScene extends Phaser.Scene {
             break;
           case 'SAIR':
             api.logout();
-            this.scene.start(SCENES.title);
+            fadeTo(this, SCENES.title);
             return;
         }
       } catch (e) {

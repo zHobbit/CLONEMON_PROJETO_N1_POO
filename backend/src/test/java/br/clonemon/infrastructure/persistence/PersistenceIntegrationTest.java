@@ -46,9 +46,9 @@ class PersistenceIntegrationTest {
     }
 
     @Test
-    void seedMatchesOriginalClonemons() {
-        assertThat(jdbc.queryForObject("select count(*) from species", Integer.class)).isEqualTo(6);
-        assertThat(jdbc.queryForObject("select count(*) from move", Integer.class)).isEqualTo(24);
+    void seedMatchesCatalog() {
+        assertThat(jdbc.queryForObject("select count(*) from species", Integer.class)).isEqualTo(12);
+        assertThat(jdbc.queryForObject("select count(*) from move", Integer.class)).isEqualTo(36);
         assertThat(catalog.findAll()).isEqualTo(Catalog.ALL);
     }
 

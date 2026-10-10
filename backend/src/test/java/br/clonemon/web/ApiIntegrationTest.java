@@ -118,7 +118,8 @@ class ApiIntegrationTest {
         MvcTestResult r = mvc.get().uri("/api/species").exchange();
         assertThat(r).hasStatusOk();
         List<String> names = read(r, "$[*].name");
-        assertThat(names).containsExactly("Lindoya", "Coiso", "Lucifer", "Olaf", "Groot", "EletroPaulo");
+        assertThat(names).containsExactly("Lindoya", "Coiso", "Lucifer", "Olaf", "Groot", "EletroPaulo",
+                "Boto", "PaoDeAcucar", "Pimentinha", "Pinguim", "Abacaxi", "Gatonet");
         List<Object> moves = read(r, "$[0].moves");
         assertThat(moves).hasSize(4);
     }

@@ -8,6 +8,7 @@ import { BATTLE_BG, drawBattleBackground, drawTitleBackground } from './scenery'
 
 const SPECIES: [string, Element][] = [
   ['Lindoya', 'AGUA'], ['Coiso', 'ROCHA'], ['Lucifer', 'FOGO'], ['Olaf', 'GELO'], ['Groot', 'GRAMA'], ['EletroPaulo', 'RAIO'],
+  ['Boto', 'AGUA'], ['PaoDeAcucar', 'ROCHA'], ['Pimentinha', 'FOGO'], ['Pinguim', 'GELO'], ['Abacaxi', 'GRAMA'], ['Gatonet', 'RAIO'],
 ];
 const ELEMENTS: Element[] = ['AGUA', 'ROCHA', 'FOGO', 'GELO', 'GRAMA', 'RAIO'];
 

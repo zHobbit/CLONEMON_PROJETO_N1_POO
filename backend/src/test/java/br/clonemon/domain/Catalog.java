@@ -6,7 +6,7 @@ import static br.clonemon.domain.MoveEffect.inflict;
 import static br.clonemon.domain.MoveEffect.lower;
 import static br.clonemon.domain.MoveEffect.raise;
 
-/** Fixture com os 6 clonemons originais (espelha V2__seed.sql e V3__battle_content.sql). */
+/** Fixture com todos os clonemons (espelha V2__seed.sql, V3__battle_content.sql e V4__new_species.sql). */
 public final class Catalog {
     private Catalog() {}
 
@@ -38,5 +38,20 @@ public final class Catalog {
                     new Move("Conta de luz", Element.RAIO, 0, 90, 15, lower(Stat.DEF, 2, 100)),
                     new Move("Dedo na tomada", Element.RAIO, 80, 95, 10, inflict(StatusCondition.PARALYSIS, 30))), LEARN_LEVELS);
 
-    public static final List<Species> ALL = List.of(LINDOYA, COISO, LUCIFER, OLAF, GROOT, ELETROPAULO);
+    // V4: um clonemon novo por elemento.
+    public static final Species BOTO = new Species(7, "Boto", Element.AGUA, 46, 52, 45, 70,
+            List.of(new Move("Esguicho", Element.AGUA, 40, 100, 25), new Move("Pororoca", Element.AGUA, 90, 85, 10)));
+    public static final Species PAO_DE_ACUCAR = new Species(8, "PaoDeAcucar", Element.ROCHA, 60, 50, 80, 22,
+            List.of(new Move("Pedra portuguesa", Element.ROCHA, 40, 100, 25), new Move("Bondinho", Element.ROCHA, 90, 85, 10)));
+    public static final Species PIMENTINHA = new Species(9, "Pimentinha", Element.FOGO, 32, 70, 35, 72,
+            List.of(new Move("Ardidinha", Element.FOGO, 40, 100, 25), new Move("Pimenta nos olhos", Element.FOGO, 90, 85, 10)));
+    public static final Species PINGUIM = new Species(10, "Pinguim", Element.GELO, 52, 48, 68, 38,
+            List.of(new Move("Ima de geladeira", Element.GELO, 40, 100, 25), new Move("Fecha a geladeira", Element.GELO, 90, 85, 10)));
+    public static final Species ABACAXI = new Species(11, "Abacaxi", Element.GRAMA, 52, 58, 62, 35,
+            List.of(new Move("Coroada", Element.GRAMA, 40, 100, 25), new Move("Descascar o abacaxi", Element.GRAMA, 90, 85, 10)));
+    public static final Species GATONET = new Species(12, "Gatonet", Element.RAIO, 40, 60, 38, 80,
+            List.of(new Move("Gambiarra", Element.RAIO, 40, 100, 25), new Move("Apagao", Element.RAIO, 90, 85, 10)));
+
+    public static final List<Species> ALL = List.of(LINDOYA, COISO, LUCIFER, OLAF, GROOT, ELETROPAULO,
+            BOTO, PAO_DE_ACUCAR, PIMENTINHA, PINGUIM, ABACAXI, GATONET);
 }

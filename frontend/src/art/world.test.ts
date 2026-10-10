@@ -107,11 +107,9 @@ describe('world tiles', () => {
       const count = [...tiles[id].px].filter((v) => wood.has(v)).length;
       expect(count, Tile[id]).toBeGreaterThan(40);
     }
-    // A ponte: tabuas no meio e agua nas bordas de cima e de baixo, para emendar com o rio.
+    // A ponte e so tabuado: duas lado a lado ou em fila formam um deque continuo, sem faixa de agua.
     const bridge = tiles[Tile.BRIDGE];
-    expect(RAMPS.water.tones).toContain(bridge.get(8, 0));
-    expect(RAMPS.water.tones).toContain(bridge.get(8, TILE_SIZE - 1));
-    expect(wood.has(bridge.get(8, 8))).toBe(true);
+    expect([...bridge.px].every((v) => wood.has(v))).toBe(true);
   });
 });
 

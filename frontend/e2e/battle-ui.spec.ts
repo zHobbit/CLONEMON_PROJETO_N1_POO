@@ -43,6 +43,10 @@ const battle: Battle = {
   ],
   enemy: combatant({ speciesId: 2, name: 'Coiso', element: 'ROCHA', level: 11, currentHp: 33, maxHp: 33 }),
   log: ['Um COISO selvagem apareceu!'],
+  npcId: null,
+  npcName: null,
+  enemyTeamSize: 1,
+  enemyActive: 0,
 };
 
 function afterTurn(): TurnResponse {

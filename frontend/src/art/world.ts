@@ -260,18 +260,18 @@ function drawSand(): PixelCanvas {
 
 function drawBridge(): PixelCanvas {
   const c = blank();
-  // Agua nas bordas de cima e de baixo (emenda com o rio) e o tabuado no meio.
-  const water = drawWater();
-  for (let i = 0; i < T * T; i++) c.px[i] = water.px[i];
-  c.fill(rect(0, 1, T, 14), C.umber);
-  for (let x = 0; x < T; x++) {
-    const seam = x % 4 === 3;
-    c.fill(rect(x, 2, 1, 12), seam ? C.darkBrown : x % 4 === 0 ? C.khaki : C.brown);
+  // So tabuado, sem agua: emenda com outras pontes em qualquer direcao e o rio fica nos ladrilhos vizinhos.
+  // Tabuas atravessadas de 4px (brilho, madeira, madeira, fresta), com as pontas desencontradas.
+  for (let y = 0; y < T; y++) {
+    const row = y % 4;
+    c.fill(rect(0, y, T, 1), row === 0 ? C.khaki : row === 3 ? C.darkBrown : C.brown);
   }
-  c.fill(rect(0, 2, T, 1), C.khaki);
-  c.fill(rect(0, 13, T, 1), C.darkBrown);
-  wrapAt(c, [[1, 6], [5, 9], [9, 5], [13, 8]], C.darkBrown);
-  c.fill(rect(0, 15, T, 1), C.navy);
+  for (let board = 0; board < T / 4; board++) {
+    const end = (board * 7 + 3) % T;
+    c.fill(rect(end, board * 4, 1, 3), C.darkBrown);
+    wrapAt(c, [[end + 1, board * 4 + 1]], C.umber);
+  }
+  wrapAt(c, [[1, 6], [9, 2], [13, 10], [5, 14]], C.umber);
   return c;
 }
 

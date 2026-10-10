@@ -7,7 +7,7 @@ function mon(element: Element, hp: number, maxHp = 40, level = 5): Combatant {
 }
 
 function battle(team: Combatant[], enemy: Combatant, status: BattleStatus = 'AWAITING_ACTION', playerActive = 0): Battle {
-  return { id: 1, status, playerActive, playerTeam: team, enemy, log: [] };
+  return { id: 1, status, playerActive, playerTeam: team, enemy, log: [], npcId: null, npcName: null, enemyTeamSize: 1, enemyActive: 0 };
 }
 
 function ev(effect: TurnEvent['effect'], playerHp: number, enemyHp: number, playerActive = 0): TurnEvent {

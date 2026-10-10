@@ -10,7 +10,7 @@ const SCENE_MUSIC: Readonly<Record<string, Track>> = {
   [SCENES.title]: 'title',
   [SCENES.login]: 'title',
   [SCENES.starter]: 'title',
-  [SCENES.hub]: 'title',
+  [SCENES.world]: 'title',
   [SCENES.team]: 'title',
   [SCENES.battle]: 'battle',
 };

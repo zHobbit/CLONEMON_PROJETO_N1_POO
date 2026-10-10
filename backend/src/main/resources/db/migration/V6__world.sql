@@ -38,10 +38,10 @@ insert into npc_trainer (id, name) values
     ('zeca', 'ZECA');
 
 insert into npc_team (npc_id, slot, species_id, level) values
-    ('caio', 0,  2,  5),  -- Coiso
-    ('caio', 1, 11,  6),  -- Abacaxi
-    ('bia',  0,  9,  7),  -- Pimentinha
-    ('bia',  1, 12,  8),  -- Gatonet
-    ('zeca', 0,  8,  9),  -- PaoDeAcucar
-    ('zeca', 1, 10, 10),  -- Pinguim
-    ('zeca', 2,  3, 11);  -- Lucifer
+    ('caio', 0,  9,  2),  -- Pimentinha
+    ('caio', 1, 12,  2),  -- Gatonet
+    ('bia',  0,  7,  6),  -- Boto
+    ('bia',  1, 11,  7),  -- Abacaxi
+    ('zeca', 0,  8,  8),  -- PaoDeAcucar
+    ('zeca', 1, 10,  9),  -- Pinguim
+    ('zeca', 2,  3, 10);  -- Lucifer

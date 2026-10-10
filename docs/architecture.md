@@ -77,9 +77,9 @@ Erros: 400 (entrada inválida), 401 (sem token ou credenciais erradas), 404, 409
 
 | Id | Nome | Time (espécie, nível) |
 |---|---|---|
-| `caio` | CAIO | Coiso 5, Abacaxi 6 |
-| `bia` | BIA | Pimentinha 7, Gatonet 8 |
-| `zeca` | ZECA | PaoDeAcucar 9, Pinguim 10, Lucifer 11 |
+| `caio` | CAIO | Pimentinha 2, Gatonet 2 |
+| `bia` | BIA | Boto 6, Abacaxi 7 |
+| `zeca` | ZECA | PaoDeAcucar 8, Pinguim 9, Lucifer 10 |
 
 - Cada treinador só pode ser derrotado uma vez; o time dele começa sempre novo, com HP e PP cheios.
 - A IA dos treinadores é a gulosa (`AiStrategy.greedy()`); os selvagens continuam escolhendo ao acaso.

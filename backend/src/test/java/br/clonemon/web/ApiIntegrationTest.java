@@ -309,7 +309,7 @@ class ApiIntegrationTest {
         assertThat(started).bodyJson().extractingPath("$.npcName").isEqualTo("CAIO");
         assertThat(started).bodyJson().extractingPath("$.enemyTeamSize").isEqualTo(2);
         assertThat(started).bodyJson().extractingPath("$.enemyActive").isEqualTo(0);
-        assertThat(started).bodyJson().extractingPath("$.enemy.name").isEqualTo("Coiso");
+        assertThat(started).bodyJson().extractingPath("$.enemy.name").isEqualTo("Pimentinha");
         assertThat(post("/api/battles", token, "{\"npcId\":\"caio\"}")).hasStatus(HttpStatus.CONFLICT);
         assertThat(post("/api/battles", token, "")).hasStatus(HttpStatus.CONFLICT);
 
@@ -328,7 +328,7 @@ class ApiIntegrationTest {
         List<String> events = read(turn, "$.events[*].text");
         assertThat(events).last().isEqualTo("Voce derrotou CAIO!");
         List<String> log = read(turn, "$.battle.log");
-        assertThat(log).contains("CAIO enviou Abacaxi!");
+        assertThat(log).contains("CAIO enviou Gatonet!");
         assertThat(turn).bodyJson().extractingPath("$.battle.enemyActive").isEqualTo(1);
 
         assertThat(get("/api/team", token)).bodyJson().extractingPath("$.team").asArray().hasSize(1);

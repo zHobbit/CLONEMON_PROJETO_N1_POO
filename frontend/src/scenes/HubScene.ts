@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ApiError } from '../api/client';
 import type { Roster } from '../api/types';
 import { addMenuBackground } from '../art/textures';
+import { audio } from '../audio';
 import { SCENES } from '../config';
 import { battleTransition, fadeTo } from '../fx/transitions';
 import { api } from '../services';
@@ -69,6 +70,7 @@ export class HubScene extends Phaser.Scene {
             return;
           case 'CURAR':
             this.show(await api.heal());
+            audio.sfx('heal');
             await this.textBox.sayAndWait('Seus CLONEMONS foram curados no CENTRO CLONEMON!');
             break;
           case 'SAIR':

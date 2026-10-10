@@ -58,7 +58,8 @@ export async function battleTransition(scene: Phaser.Scene): Promise<void> {
   await Promise.all(
     Array.from({ length: BARS }, (_, i) => {
       const fromLeft = i % 2 === 0;
-      const bar = scene.add.rectangle(fromLeft ? -WIDTH : WIDTH, i * h, WIDTH, h, COLORS.page).setOrigin(0).setDepth(1000);
+      // Presas a tela e acima de tudo (o mapa tem camera que se move e camadas altas).
+      const bar = scene.add.rectangle(fromLeft ? -WIDTH : WIDTH, i * h, WIDTH, h, COLORS.page).setOrigin(0).setScrollFactor(0).setDepth(100_000);
       return tween(scene, { targets: bar, x: 0, delay: i * BAR_STAGGER, duration: BAR_MS, ease: 'Quad.In' });
     }),
   );

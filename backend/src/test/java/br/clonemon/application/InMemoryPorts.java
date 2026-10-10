@@ -2,19 +2,26 @@ package br.clonemon.application;
 
 import br.clonemon.application.port.BattleRepository;
 import br.clonemon.application.port.MonsterRepository;
+import br.clonemon.application.port.NpcCatalog;
 import br.clonemon.application.port.SpeciesCatalog;
 import br.clonemon.application.port.TrainerRepository;
+import br.clonemon.application.port.WorldRepository;
 import br.clonemon.domain.Battle;
 import br.clonemon.domain.Catalog;
 import br.clonemon.domain.Monster;
+import br.clonemon.domain.NpcTrainer;
 import br.clonemon.domain.Species;
 import br.clonemon.domain.Trainer;
+import br.clonemon.domain.WorldPosition;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.random.RandomGenerator;
 
@@ -82,19 +89,49 @@ final class InMemoryPorts {
         }
     }
 
+    static final class Npcs implements NpcCatalog {
+        @Override public List<NpcTrainer> findAll() { return Catalog.NPCS; }
+
+        @Override public Optional<NpcTrainer> findById(String id) {
+            return Catalog.NPCS.stream().filter(n -> n.id().equals(id)).findFirst();
+        }
+    }
+
+    static final class World implements WorldRepository {
+        private final Map<Long, WorldPosition> positions = new HashMap<>();
+        private final Map<Long, Set<String>> defeats = new HashMap<>();
+
+        @Override public Optional<WorldPosition> findPosition(long trainerId) {
+            return Optional.ofNullable(positions.get(trainerId));
+        }
+
+        @Override public void savePosition(long trainerId, WorldPosition position) { positions.put(trainerId, position); }
+
+        @Override public List<String> findDefeatedNpcs(long trainerId) {
+            return List.copyOf(defeats.getOrDefault(trainerId, Set.of()));
+        }
+
+        @Override public boolean hasDefeated(long trainerId, String npcId) { return findDefeatedNpcs(trainerId).contains(npcId); }
+
+        @Override public void recordDefeat(long trainerId, String npcId) {
+            defeats.computeIfAbsent(trainerId, k -> new LinkedHashSet<>()).add(npcId);
+        }
+    }
+
     static final class Battles implements BattleRepository {
         private final Map<Long, StoredBattle> data = new TreeMap<>();
         private long seq;
 
         @Override public StoredBattle save(StoredBattle b) {
             long id = b.id() != null ? b.id() : ++seq;
-            StoredBattle stored = new StoredBattle(id, b.trainerId(), b.playerMonsterIds(), copy(b.state()));
+            StoredBattle stored = new StoredBattle(id, b.trainerId(), b.npcId(), b.playerMonsterIds(), copy(b.state()));
             data.put(id, stored);
             return stored;
         }
 
         @Override public Optional<StoredBattle> findById(long id) {
-            return Optional.ofNullable(data.get(id)).map(b -> new StoredBattle(b.id(), b.trainerId(), b.playerMonsterIds(), copy(b.state())));
+            return Optional.ofNullable(data.get(id))
+                    .map(b -> new StoredBattle(b.id(), b.trainerId(), b.npcId(), b.playerMonsterIds(), copy(b.state())));
         }
 
         @Override public Optional<StoredBattle> findActiveByTrainer(long trainerId) {

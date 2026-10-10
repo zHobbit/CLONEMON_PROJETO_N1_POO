@@ -24,15 +24,24 @@ public final class BattleDtos {
         }
     }
 
+    /** Corpo opcional de {@code POST /api/battles}: sem {@code npcId}, a batalha e contra um selvagem. */
+    public record StartRequest(String npcId) {}
+
+    /**
+     * {@code npcId} e {@code npcName} sao nulos contra selvagem. {@code enemyActive} e o indice do monstro do oponente
+     * em campo, de {@code enemyTeamSize} (1 contra selvagem).
+     */
     public record BattleDto(long id, Battle.Status status, int playerActive, List<CombatantDto> playerTeam,
-                            CombatantDto enemy, List<String> log) {
+                            CombatantDto enemy, List<String> log, String npcId, String npcName,
+                            int enemyTeamSize, int enemyActive) {
         public static BattleDto of(BattleSession s) {
             Battle b = s.battle();
             List<CombatantDto> team = IntStream.range(0, b.playerTeam().size())
                     .mapToObj(i -> CombatantDto.of(s.playerMonsterIds().get(i), b.playerTeam().get(i), true))
                     .toList();
             return new BattleDto(s.id(), b.status(), b.playerActiveIndex(), team,
-                    CombatantDto.of(null, b.enemyMonster(), false), b.log());
+                    CombatantDto.of(null, b.enemyMonster(), false), b.log(), s.npcId(), b.opponentName(),
+                    b.enemyTeam().size(), b.enemyActiveIndex());
         }
     }
 

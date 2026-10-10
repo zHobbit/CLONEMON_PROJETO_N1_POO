@@ -66,4 +66,14 @@ public final class Catalog {
 
     public static final List<Species> ALL = List.of(LINDOYA, COISO, LUCIFER, OLAF, GROOT, ELETROPAULO,
             BOTO, PAO_DE_ACUCAR, PIMENTINHA, PINGUIM, ABACAXI, GATONET);
+
+    // Treinadores do mapa (V6).
+    public static final NpcTrainer CAIO = new NpcTrainer("caio", "CAIO",
+            List.of(new NpcTrainer.Member(COISO, 5), new NpcTrainer.Member(ABACAXI, 6)));
+    public static final NpcTrainer BIA = new NpcTrainer("bia", "BIA",
+            List.of(new NpcTrainer.Member(PIMENTINHA, 7), new NpcTrainer.Member(GATONET, 8)));
+    public static final NpcTrainer ZECA = new NpcTrainer("zeca", "ZECA",
+            List.of(new NpcTrainer.Member(PAO_DE_ACUCAR, 9), new NpcTrainer.Member(PINGUIM, 10), new NpcTrainer.Member(LUCIFER, 11)));
+
+    public static final List<NpcTrainer> NPCS = List.of(CAIO, BIA, ZECA);
 }

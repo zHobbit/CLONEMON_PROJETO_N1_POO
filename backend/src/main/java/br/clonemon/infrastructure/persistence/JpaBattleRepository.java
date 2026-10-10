@@ -46,14 +46,14 @@ class JpaBattleRepository implements BattleRepository {
     @Override
     public StoredBattle save(StoredBattle b) {
         BattleEntity e = b.id() == null
-                ? new BattleEntity(b.trainerId())
+                ? new BattleEntity(b.trainerId(), b.npcId())
                 : jpa.findById(b.id()).orElseThrow(() -> new NotFoundException("Battle not found: " + b.id()));
         Battle.State s = b.state();
         StateJson payload = new StateJson(b.playerMonsterIds(), toJson(s.playerTeam()), toJson(s.enemyTeam()),
                 s.playerActive(), s.enemyActive(), s.log());
         e.update(s.status().name(), json.writeValueAsString(payload));
         BattleEntity saved = jpa.save(e);
-        return new StoredBattle(saved.getId(), b.trainerId(), b.playerMonsterIds(), s);
+        return new StoredBattle(saved.getId(), b.trainerId(), saved.getNpcId(), b.playerMonsterIds(), s);
     }
 
     @Override
@@ -70,7 +70,7 @@ class JpaBattleRepository implements BattleRepository {
         StateJson p = json.readValue(e.getState(), StateJson.class);
         Battle.State state = new Battle.State(fromJson(p.player()), fromJson(p.enemy()), p.playerActive(), p.enemyActive(),
                 Battle.Status.valueOf(e.getStatus()), p.log());
-        return new StoredBattle(e.getId(), e.getTrainerId(), p.playerMonsterIds(), state);
+        return new StoredBattle(e.getId(), e.getTrainerId(), e.getNpcId(), p.playerMonsterIds(), state);
     }
 
     private static List<MonsterJson> toJson(List<Monster> team) {

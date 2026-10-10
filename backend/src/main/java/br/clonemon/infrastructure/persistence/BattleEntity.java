@@ -19,6 +19,10 @@ class BattleEntity {
     @Column(name = "trainer_id", nullable = false)
     private long trainerId;
 
+    /** Treinador desafiado; nulo em batalha contra selvagem (e nas gravadas antes da V6). */
+    @Column(name = "npc_id", length = 20, updatable = false)
+    private String npcId;
+
     @Column(nullable = false, length = 20)
     private String status;
 
@@ -33,10 +37,14 @@ class BattleEntity {
 
     protected BattleEntity() {}
 
-    BattleEntity(long trainerId) { this.trainerId = trainerId; }
+    BattleEntity(long trainerId, String npcId) {
+        this.trainerId = trainerId;
+        this.npcId = npcId;
+    }
 
     Long getId() { return id; }
     long getTrainerId() { return trainerId; }
+    String getNpcId() { return npcId; }
     String getStatus() { return status; }
     String getState() { return state; }
 

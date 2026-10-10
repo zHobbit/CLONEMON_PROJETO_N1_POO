@@ -5,8 +5,10 @@ import br.clonemon.application.OwnedMonster;
 import br.clonemon.application.port.BattleRepository;
 import br.clonemon.application.port.BattleRepository.StoredBattle;
 import br.clonemon.application.port.MonsterRepository;
+import br.clonemon.application.port.NpcCatalog;
 import br.clonemon.application.port.SpeciesCatalog;
 import br.clonemon.application.port.TrainerRepository;
+import br.clonemon.application.port.WorldRepository;
 import br.clonemon.domain.Battle;
 import br.clonemon.domain.Catalog;
 import br.clonemon.domain.ExperienceCurve;
@@ -14,6 +16,8 @@ import br.clonemon.domain.Monster;
 import br.clonemon.domain.Stat;
 import br.clonemon.domain.StatusCondition;
 import br.clonemon.domain.Trainer;
+import br.clonemon.domain.WorldPosition;
+import br.clonemon.domain.WorldPosition.Facing;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +42,8 @@ class PersistenceIntegrationTest {
     @Autowired MonsterRepository monsters;
     @Autowired BattleRepository battles;
     @Autowired SpeciesCatalog catalog;
+    @Autowired NpcCatalog npcs;
+    @Autowired WorldRepository world;
     @Autowired JdbcTemplate jdbc;
     @Autowired TransactionTemplate tx;
 
@@ -148,7 +154,7 @@ class PersistenceIntegrationTest {
         Battle.State state = new Battle.State(List.of(hero.monster()), List.of(enemy), 0, 0,
                 Battle.Status.AWAITING_ACTION, List.of("Groot usou Cartolinada!", "E super efetivo!"));
 
-        StoredBattle saved = battles.save(new StoredBattle(null, trainerId, List.of(hero.id()), state));
+        StoredBattle saved = battles.save(new StoredBattle(null, trainerId, null, List.of(hero.id()), state));
         StoredBattle loaded = battles.findById(saved.id()).orElseThrow();
 
         assertThat(loaded.trainerId()).isEqualTo(trainerId);
@@ -174,7 +180,7 @@ class PersistenceIntegrationTest {
         enemy.changeStage(Stat.ATK, 1);
         Battle.State state = new Battle.State(List.of(hero.monster()), List.of(enemy), 0, 0, Battle.Status.AWAITING_ACTION, List.of());
 
-        StoredBattle loaded = battles.findById(battles.save(new StoredBattle(null, trainerId, List.of(hero.id()), state)).id())
+        StoredBattle loaded = battles.findById(battles.save(new StoredBattle(null, trainerId, null, List.of(hero.id()), state)).id())
                 .orElseThrow();
 
         Monster loadedHero = loaded.state().playerTeam().getFirst();
@@ -210,6 +216,76 @@ class PersistenceIntegrationTest {
         assertThat(enemy.level()).isEqualTo(10);
         assertThat(enemy.ppSnapshot()).containsExactly(25, 10, 20);
         assertThat(loaded.state().log()).containsExactly("Groot usou Cartolinada!");
+        assertThat(loaded.npcId()).as("batalhas de antes da V6 sao contra selvagem").isNull();
+    }
+
+    // --- Mapa do mundo (V6) ---
+
+    @Test
+    void seedHasTheMapTrainers() {
+        assertThat(npcs.findAll()).containsExactlyInAnyOrderElementsOf(Catalog.NPCS);
+        assertThat(npcs.findById("zeca")).contains(Catalog.ZECA);
+        assertThat(npcs.findById("nobody")).isEmpty();
+    }
+
+    @Test
+    void worldPositionRoundTrip() {
+        Trainer t = newTrainer();
+        assertThat(world.findPosition(t.id())).isEmpty();
+
+        world.savePosition(t.id(), new WorldPosition(12, 34, Facing.LEFT));
+        assertThat(world.findPosition(t.id())).contains(new WorldPosition(12, 34, Facing.LEFT));
+
+        world.savePosition(t.id(), new WorldPosition(0, 199, Facing.UP));
+        assertThat(world.findPosition(t.id())).contains(new WorldPosition(0, 199, Facing.UP));
+        assertThat(trainers.findByUsername(t.username())).contains(t);
+    }
+
+    @Test
+    void worldPositionConstraints() {
+        long id = newTrainer().id();
+        assertThatThrownBy(() -> jdbc.update("update trainer set world_x = 200, world_y = 0, world_facing = 'UP' where id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update("update trainer set world_x = 1, world_y = 1, world_facing = 'NORTH' where id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update("update trainer set world_x = 1 where id = ?", id))
+                .as("a posicao e salva inteira ou nao e salva").isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void npcDefeatsAreRecordedOncePerTrainer() {
+        long trainerId = newTrainer().id();
+        long other = newTrainer().id();
+        assertThat(world.hasDefeated(trainerId, "caio")).isFalse();
+
+        world.recordDefeat(trainerId, "caio");
+        world.recordDefeat(trainerId, "caio");
+        world.recordDefeat(trainerId, "bia");
+
+        assertThat(world.findDefeatedNpcs(trainerId)).containsExactly("caio", "bia");
+        assertThat(world.hasDefeated(trainerId, "caio")).isTrue();
+        assertThat(world.findDefeatedNpcs(other)).isEmpty();
+        assertThatThrownBy(() -> world.recordDefeat(trainerId, "nobody")).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void battleAgainstNpcKeepsTheNpcId() {
+        long trainerId = newTrainer().id();
+        OwnedMonster hero = monsters.save(new OwnedMonster(null, trainerId, "h", 0, new Monster(Catalog.GROOT, 10)));
+        Battle.State state = new Battle.State(List.of(hero.monster()), Catalog.ZECA.freshTeam(), 0, 1,
+                Battle.Status.AWAITING_ACTION, List.of("ZECA enviou Pinguim!"));
+
+        StoredBattle saved = battles.save(new StoredBattle(null, trainerId, "zeca", List.of(hero.id()), state));
+        StoredBattle loaded = battles.findById(saved.id()).orElseThrow();
+
+        assertThat(saved.npcId()).isEqualTo("zeca");
+        assertThat(loaded.npcId()).isEqualTo("zeca");
+        assertThat(loaded.state().enemyActive()).isEqualTo(1);
+        assertThat(loaded.state().enemyTeam()).extracting(Monster::species)
+                .containsExactly(Catalog.PAO_DE_ACUCAR, Catalog.PINGUIM, Catalog.LUCIFER);
+        assertThat(battles.findActiveByTrainer(trainerId)).map(StoredBattle::npcId).contains("zeca");
+        assertThatThrownBy(() -> battles.save(new StoredBattle(null, newTrainer().id(), "nobody", List.of(hero.id()), state)))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
@@ -218,13 +294,13 @@ class PersistenceIntegrationTest {
         OwnedMonster hero = monsters.save(new OwnedMonster(null, trainerId, "h", 0, new Monster(Catalog.GROOT, 10)));
         Battle.State active = new Battle.State(List.of(hero.monster()), List.of(new Monster(Catalog.OLAF, 5)), 0, 0,
                 Battle.Status.AWAITING_ACTION, List.of());
-        StoredBattle saved = battles.save(new StoredBattle(null, trainerId, List.of(hero.id()), active));
+        StoredBattle saved = battles.save(new StoredBattle(null, trainerId, null, List.of(hero.id()), active));
 
-        assertThatThrownBy(() -> battles.save(new StoredBattle(null, trainerId, List.of(hero.id()), active)))
+        assertThatThrownBy(() -> battles.save(new StoredBattle(null, trainerId, null, List.of(hero.id()), active)))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         Battle.State fled = new Battle.State(active.playerTeam(), active.enemyTeam(), 0, 0, Battle.Status.FLED, List.of("Voce fugiu!"));
-        battles.save(new StoredBattle(saved.id(), trainerId, List.of(hero.id()), fled));
+        battles.save(new StoredBattle(saved.id(), trainerId, null, List.of(hero.id()), fled));
         assertThat(battles.findActiveByTrainer(trainerId)).isEmpty();
     }
 }

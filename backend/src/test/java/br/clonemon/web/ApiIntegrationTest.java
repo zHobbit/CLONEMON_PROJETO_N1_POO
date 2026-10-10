@@ -1,6 +1,7 @@
 package br.clonemon.web;
 
 import br.clonemon.TestcontainersConfiguration;
+import br.clonemon.domain.ExperienceCurve;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -26,6 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ApiIntegrationTest {
 
     @Autowired MockMvcTester mvc;
+    @Autowired JdbcTemplate jdbc;
 
     private static String uniqueName() {
         return "u" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
@@ -241,6 +244,102 @@ class ApiIntegrationTest {
         assertThat(playerStatuses).isNotEmpty().allMatch(s -> List.of("NONE", "BURN", "FREEZE", "PARALYSIS", "SLEEP").contains(s));
         assertThat(enemyStatuses).hasSameSizeAs(playerStatuses);
         assertThat((String) read(turn, "$.battle.enemy.status")).isNotNull();
+    }
+
+    @Test
+    void wildBattleHasNoNpc() {
+        String token = trainerWithStarter(4);
+        MvcTestResult started = mvc.post().uri("/api/battles").header(HttpHeaders.AUTHORIZATION, "Bearer " + token).exchange();
+        assertThat(started).as("sem corpo nem content-type continua sendo selvagem").hasStatus(HttpStatus.CREATED);
+        assertThat(started).bodyJson().extractingPath("$.npcId").isNull();
+        assertThat(started).bodyJson().extractingPath("$.npcName").isNull();
+        assertThat(started).bodyJson().extractingPath("$.enemyTeamSize").isEqualTo(1);
+        assertThat(started).bodyJson().extractingPath("$.enemyActive").isEqualTo(0);
+        assertThat(post("/api/battles", token, "{}")).as("batalha em andamento").hasStatus(HttpStatus.CONFLICT);
+    }
+
+    // --- Mapa do mundo ---
+
+    private MvcTestResult put(String uri, String token, String body) {
+        return mvc.put().uri(uri).contentType(MediaType.APPLICATION_JSON).content(body)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token).exchange();
+    }
+
+    @Test
+    void worldStartsWithoutPositionAndSavesIt() {
+        String token = register(uniqueName());
+        MvcTestResult fresh = get("/api/world", token);
+        assertThat(fresh).hasStatusOk().bodyJson().extractingPath("$.position").isNull();
+        assertThat(fresh).bodyJson().extractingPath("$.defeatedNpcs").asArray().isEmpty();
+
+        assertThat(put("/api/world/position", token, "{\"x\":10,\"y\":199,\"facing\":\"LEFT\"}")).hasStatus(HttpStatus.NO_CONTENT);
+
+        MvcTestResult saved = get("/api/world", token);
+        assertThat(saved).bodyJson().extractingPath("$.position.x").isEqualTo(10);
+        assertThat(saved).bodyJson().extractingPath("$.position.y").isEqualTo(199);
+        assertThat(saved).bodyJson().extractingPath("$.position.facing").isEqualTo("LEFT");
+    }
+
+    @Test
+    void invalidPositionIsBadRequest() {
+        String token = register(uniqueName());
+        for (String body : List.of("{\"x\":200,\"y\":0,\"facing\":\"UP\"}", "{\"x\":0,\"y\":-1,\"facing\":\"UP\"}",
+                "{\"x\":1,\"y\":1,\"facing\":\"NORTH\"}", "{\"x\":1,\"y\":1}", "{\"y\":1,\"facing\":\"UP\"}"))
+            assertThat(put("/api/world/position", token, body)).as(body)
+                    .hasStatus(HttpStatus.BAD_REQUEST).hasContentType(MediaType.APPLICATION_PROBLEM_JSON);
+        assertThat(get("/api/world", token)).bodyJson().extractingPath("$.position").isNull();
+        assertThat(mvc.get().uri("/api/world")).hasStatus(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void npcBattleFlow() {
+        String name = uniqueName();
+        String token = register(name);
+        assertThat(post("/api/team/starter", token, "{\"speciesId\":1}")).hasStatus(HttpStatus.CREATED);
+        // Nivel 40 para vencer com folga; o Centro Clonemon enche o HP do novo nivel.
+        jdbc.update("update monster set xp = ? where trainer_id = (select id from trainer where username = ?)",
+                ExperienceCurve.xpForLevel(40), name);
+        assertThat(post("/api/team/heal", token, "")).hasStatusOk();
+
+        assertThat(post("/api/battles", token, "{\"npcId\":\"nobody\"}")).hasStatus(HttpStatus.NOT_FOUND);
+
+        MvcTestResult started = post("/api/battles", token, "{\"npcId\":\"caio\"}");
+        assertThat(started).hasStatus(HttpStatus.CREATED);
+        assertThat(started).bodyJson().extractingPath("$.npcId").isEqualTo("caio");
+        assertThat(started).bodyJson().extractingPath("$.npcName").isEqualTo("CAIO");
+        assertThat(started).bodyJson().extractingPath("$.enemyTeamSize").isEqualTo(2);
+        assertThat(started).bodyJson().extractingPath("$.enemyActive").isEqualTo(0);
+        assertThat(started).bodyJson().extractingPath("$.enemy.name").isEqualTo("Coiso");
+        assertThat(post("/api/battles", token, "{\"npcId\":\"caio\"}")).hasStatus(HttpStatus.CONFLICT);
+        assertThat(post("/api/battles", token, "")).hasStatus(HttpStatus.CONFLICT);
+
+        String turns = "/api/battles/" + read(started, "$.id") + "/turns";
+        assertThat(post(turns, token, "{\"action\":\"RUN\"}")).hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson().extractingPath("$.detail").isEqualTo("Nao da para fugir de batalha contra treinador");
+
+        MvcTestResult turn = started;
+        String status = "AWAITING_ACTION";
+        for (int i = 0; i < 30 && status.equals("AWAITING_ACTION"); i++) {
+            turn = post(turns, token, nextAction(turn, i == 0 ? "$" : "$.battle"));
+            assertThat(turn).hasStatusOk();
+            status = read(turn, "$.battle.status");
+        }
+        assertThat(status).isEqualTo("PLAYER_WON");
+        List<String> events = read(turn, "$.events[*].text");
+        assertThat(events).last().isEqualTo("Voce derrotou CAIO!");
+        List<String> log = read(turn, "$.battle.log");
+        assertThat(log).contains("CAIO enviou Abacaxi!");
+        assertThat(turn).bodyJson().extractingPath("$.battle.enemyActive").isEqualTo(1);
+
+        assertThat(get("/api/team", token)).bodyJson().extractingPath("$.team").asArray().hasSize(1);
+        assertThat(get("/api/world", token)).bodyJson().extractingPath("$.defeatedNpcs").asArray().containsExactly("caio");
+        assertThat(post("/api/battles", token, "{\"npcId\":\"caio\"}")).hasStatus(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void npcBattleNeedsATeamAbleToFight() {
+        String token = register(uniqueName());
+        assertThat(post("/api/battles", token, "{\"npcId\":\"bia\"}")).hasStatus(HttpStatus.CONFLICT);
     }
 
     /** Usa o primeiro golpe com PP do monstro ativo; foge se nao houver nenhum. */

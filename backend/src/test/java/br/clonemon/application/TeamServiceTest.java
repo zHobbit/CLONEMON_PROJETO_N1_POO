@@ -80,7 +80,7 @@ class TeamServiceTest {
     @Test
     void cannotHealOrChangeTeamDuringBattle() {
         OwnedMonster a = monsters.add(TRAINER, Catalog.GROOT, 10, 0);
-        new BattleService(battles, monsters, catalog,
+        new BattleService(battles, monsters, catalog, new InMemoryPorts.Npcs(), new InMemoryPorts.World(),
                 new DamageCalculator(new InMemoryPorts.ScriptedRandom()),
                 AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom()).start(TRAINER);
 

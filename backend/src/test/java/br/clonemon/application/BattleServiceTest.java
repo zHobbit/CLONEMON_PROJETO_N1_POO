@@ -30,6 +30,7 @@ class BattleServiceTest {
     /** Encontro: nextInt(4)=0 => nivel do time - 2; nextInt(12)=1 => Coiso (ROCHA, fraco contra AGUA). */
     private BattleService serviceMeetingCoiso() {
         return new BattleService(battles, monsters, new InMemoryPorts.FixtureCatalog(),
+                new InMemoryPorts.Npcs(), new InMemoryPorts.World(),
                 new DamageCalculator(STEADY), AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom(0, 1));
     }
 
@@ -130,6 +131,7 @@ class BattleServiceTest {
         hero.monster().gainXp(ExperienceCurve.xpForLevel(7) - 80 - hero.monster().xp());
         monsters.save(hero);
         BattleService service = new BattleService(battles, monsters, new InMemoryPorts.FixtureCatalog(),
+                new InMemoryPorts.Npcs(), new InMemoryPorts.World(),
                 new DamageCalculator(STEADY), AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom(0, 3)); // Olaf
         BattleSession s = service.start(TRAINER);
 

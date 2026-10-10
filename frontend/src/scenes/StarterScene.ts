@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import type { Species } from '../api/types';
 import { addMenuBackground, addMonster, elementKey } from '../art/textures';
+import { audio } from '../audio';
 import { COLORS, SCENES, WIDTH } from '../config';
+import { fadeTo } from '../fx/transitions';
 import { api, catalog } from '../services';
 import { onKey } from '../ui/input';
 import { Menu } from '../ui/Menu';
@@ -39,6 +41,7 @@ export class StarterScene extends Phaser.Scene {
       const sprite = addMonster(this, x + CELL_W / 2, y + CELL_H / 2, s.id, 'front');
       sprite.setInteractive({ useHandCursor: true }).on('pointerover', () => {
         if (!this.browsing) return;
+        if (i !== this.index) audio.sfx('cursor');
         this.index = i;
         this.show(species);
       });
@@ -66,7 +69,7 @@ export class StarterScene extends Phaser.Scene {
       try {
         const starter = await api.chooseStarter(s.id);
         await this.textBox.sayAndWait(`Voce escolheu ${starter.species.toUpperCase()}! Cuide bem dele.`);
-        this.scene.start(SCENES.hub);
+        fadeTo(this, SCENES.hub);
       } catch {
         await this.textBox.sayAndWait('Nao foi possivel escolher. Tente de novo.');
       }
@@ -83,6 +86,7 @@ export class StarterScene extends Phaser.Scene {
         this.browsing = false;
         off();
         this.input.off('gameobjectdown', done);
+        audio.sfx('confirm');
         resolve(this.index);
       };
       this.input.on('gameobjectdown', done);
@@ -90,7 +94,9 @@ export class StarterScene extends Phaser.Scene {
         if (k === 'confirm') {
           done();
         } else if (isDirection(k)) {
-          this.index = moveCursor(this.index, k, species.length, COLS);
+          const next = moveCursor(this.index, k, species.length, COLS);
+          if (next !== this.index) audio.sfx('cursor');
+          this.index = next;
           this.show(species);
         }
       });

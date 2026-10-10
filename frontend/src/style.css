@@ -33,6 +33,20 @@ body {
   image-rendering: pixelated;
 }
 
+#game {
+  position: relative;
+}
+
+/* Icone de "sem som" (tecla M) no canto da tela; tamanho e posicao seguem o zoom do jogo. */
+#mute-indicator {
+  position: absolute;
+  pointer-events: none;
+}
+
+#mute-indicator[hidden] {
+  display: none;
+}
+
 .overlay {
   position: absolute;
   display: flex;

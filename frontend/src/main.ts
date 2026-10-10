@@ -1,7 +1,9 @@
 import '@fontsource/press-start-2p';
 import './style.css';
 import Phaser from 'phaser';
+import { installAudio } from './audio/install';
 import { COLORS, FONT_FAMILY, HEIGHT, SCENES, WIDTH } from './config';
+import { installTransitions } from './fx/transitions';
 import { BattleScene } from './scenes/BattleScene';
 import { BootScene } from './scenes/BootScene';
 import { HubScene } from './scenes/HubScene';
@@ -34,9 +36,13 @@ async function start(): Promise<void> {
     backgroundColor: COLORS.page,
     scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
     scene: [BootScene, TitleScene, LoginScene, StarterScene, HubScene, TeamScene, BattleScene],
+    // Musica e efeitos vem do motor proprio (src/audio); o som do Phaser criaria outro AudioContext a toa.
+    audio: { noAudio: true },
   });
 
   window.addEventListener('resize', () => game.scale.setZoom(integerZoom()));
+  installAudio(game);
+  installTransitions(game);
 
   api.onUnauthorized = () => {
     for (const scene of game.scene.getScenes(true)) scene.scene.stop();

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { audio } from '../audio';
 import { CSS, LINE } from '../config';
 import { onKey } from './input';
 import { isDirection, moveCursor } from './navigation';
@@ -53,6 +54,7 @@ export class Menu {
     return new Promise((resolve) => {
       const finish = (value: number | null) => {
         off();
+        audio.sfx(value === null ? 'cancel' : 'confirm');
         for (const t of this.texts) t.removeAllListeners().disableInteractive();
         resolve(value);
       };
@@ -81,6 +83,7 @@ export class Menu {
   }
 
   private select(i: number): void {
+    if (i !== this.index) audio.sfx('cursor');
     this.index = i;
     const t = this.texts[i];
     this.cursor.setPosition(t.x - 9, t.y);

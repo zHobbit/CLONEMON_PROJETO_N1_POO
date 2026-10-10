@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { audio } from '../audio';
 import { COLORS, HEIGHT, WIDTH } from '../config';
 import { onKey, waitConfirm } from './input';
 import { addText, drawFrame } from './widgets';
@@ -73,6 +74,7 @@ export class TextBox {
   async waitArrow(): Promise<void> {
     this.arrow.setVisible(true);
     await waitConfirm(this.scene);
+    audio.sfx('text');
     this.arrow.setVisible(false);
   }
 

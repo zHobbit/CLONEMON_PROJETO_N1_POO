@@ -5,7 +5,13 @@ import { type Key, mapKey } from './navigation';
 export function onKey(scene: Phaser.Scene, handler: (key: Key) => void): () => void {
   const keyboard = scene.input.keyboard;
   if (!keyboard) return () => {};
+  // O Phaser reprocessa a fila de teclas do quadro inteiro a cada evento novo do navegador, entao uma
+  // tecla pode chegar de novo (ou chegar a um ouvinte criado depois dela). Cada tecla conta uma vez.
+  const since = performance.now();
+  const handled = new WeakSet<KeyboardEvent>();
   const listener = (e: KeyboardEvent) => {
+    if (e.timeStamp <= since || handled.has(e)) return;
+    handled.add(e);
     const key = mapKey(e.key);
     // Segurar Enter nao deve pular varias mensagens; setas podem repetir.
     if (!key || (e.repeat && (key === 'confirm' || key === 'cancel'))) return;

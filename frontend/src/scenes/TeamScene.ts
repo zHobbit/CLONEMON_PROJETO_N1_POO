@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { Monster, Roster } from '../api/types';
 import { addMenuBackground } from '../art/textures';
+import { audio } from '../audio';
 import { SCENES } from '../config';
 import { fadeTo } from '../fx/transitions';
 import { api } from '../services';
@@ -84,12 +85,16 @@ export class TeamScene extends Phaser.Scene {
       const off = onKey(this, (k) => {
         if (k === 'confirm') {
           off();
+          audio.sfx('confirm');
           resolve(monsters[this.index]);
         } else if (k === 'cancel') {
           off();
+          audio.sfx('cancel');
           resolve(null);
         } else if (k === 'up' || k === 'down') {
-          this.index = Phaser.Math.Clamp(this.index + (k === 'up' ? -1 : 1), 0, monsters.length - 1);
+          const next = Phaser.Math.Clamp(this.index + (k === 'up' ? -1 : 1), 0, monsters.length - 1);
+          if (next !== this.index) audio.sfx('cursor');
+          this.index = next;
           this.render(monsters);
         }
       });

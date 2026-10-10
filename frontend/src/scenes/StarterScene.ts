@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { Species } from '../api/types';
 import { addMenuBackground, addMonster, elementKey } from '../art/textures';
+import { audio } from '../audio';
 import { COLORS, SCENES, WIDTH } from '../config';
 import { fadeTo } from '../fx/transitions';
 import { api, catalog } from '../services';
@@ -40,6 +41,7 @@ export class StarterScene extends Phaser.Scene {
       const sprite = addMonster(this, x + CELL_W / 2, y + CELL_H / 2, s.id, 'front');
       sprite.setInteractive({ useHandCursor: true }).on('pointerover', () => {
         if (!this.browsing) return;
+        if (i !== this.index) audio.sfx('cursor');
         this.index = i;
         this.show(species);
       });
@@ -84,6 +86,7 @@ export class StarterScene extends Phaser.Scene {
         this.browsing = false;
         off();
         this.input.off('gameobjectdown', done);
+        audio.sfx('confirm');
         resolve(this.index);
       };
       this.input.on('gameobjectdown', done);
@@ -91,7 +94,9 @@ export class StarterScene extends Phaser.Scene {
         if (k === 'confirm') {
           done();
         } else if (isDirection(k)) {
-          this.index = moveCursor(this.index, k, species.length, COLS);
+          const next = moveCursor(this.index, k, species.length, COLS);
+          if (next !== this.index) audio.sfx('cursor');
+          this.index = next;
           this.show(species);
         }
       });

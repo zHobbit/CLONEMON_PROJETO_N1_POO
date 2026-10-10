@@ -60,6 +60,46 @@ class DamageCalculatorTest {
     }
 
     @Test
+    void statusMoveOnlyRollsAccuracy() {
+        Move sleep = Catalog.GROOT.moves().get(3); // Cha de camomila: poder 0, precisao 75
+        var hit = new DamageCalculator(fixed(0)).calculate(lindoya, coiso, sleep);
+        assertThat(hit.hit()).isTrue();
+        assertThat(hit.damage()).isZero();
+        assertThat(hit.critical()).isFalse();
+        assertThat(hit.effectiveness()).isEqualTo(Element.NEUTRAL);
+        assertThat(new DamageCalculator(fixed(75)).calculate(lindoya, coiso, sleep).hit()).isFalse();
+    }
+
+    @Test
+    void stagesAndBurnChangeDamage() {
+        DamageCalculator calc = new DamageCalculator(fixed(50));
+        Move cuspe = Catalog.LINDOYA.moves().get(0);
+        int normal = calc.calculate(lindoya, olaf, cuspe).damage();
+
+        lindoya.changeStage(Stat.ATK, 2);
+        int boosted = calc.calculate(lindoya, olaf, cuspe).damage();
+        olaf.changeStage(Stat.DEF, 2);
+        int evened = calc.calculate(lindoya, olaf, cuspe).damage();
+        lindoya.resetStages();
+        lindoya.inflict(StatusCondition.BURN, 0);
+        int burned = calc.calculate(lindoya, olaf, cuspe).damage();
+
+        assertThat(boosted).isGreaterThan(normal);
+        assertThat(evened).isEqualTo(normal);
+        assertThat(burned).isLessThan(normal);
+    }
+
+    @Test
+    void chanceUsesTheInjectedGenerator() {
+        assertThat(new DamageCalculator(fixed(29)).chance(30)).isTrue();
+        assertThat(new DamageCalculator(fixed(30)).chance(30)).isFalse();
+        assertThat(new DamageCalculator(fixed(99)).chance(100)).isTrue();
+        assertThat(new DamageCalculator(fixed(0)).chance(0)).isFalse();
+        assertThat(new DamageCalculator(fixed(2)).between(1, 3)).isEqualTo(3);
+        assertThat(new DamageCalculator(fixed(0)).between(1, 3)).isEqualTo(1);
+    }
+
+    @Test
     void minimumDamageIsOne() {
         Monster weak = new Monster(Catalog.ELETROPAULO, 1);
         Monster tank = new Monster(Catalog.COISO, 50);

@@ -5,6 +5,7 @@ import br.clonemon.application.BattleSession;
 import br.clonemon.domain.Battle;
 import br.clonemon.domain.Element;
 import br.clonemon.domain.Monster;
+import br.clonemon.domain.StatusCondition;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,10 +17,10 @@ public final class BattleDtos {
 
     /** Monstro em combate. Os golpes do oponente ficam ocultos ({@code moves} nulo). */
     public record CombatantDto(Long monsterId, long speciesId, String name, Element element, int level,
-                               int currentHp, int maxHp, boolean fainted, List<MoveDto> moves) {
+                               int currentHp, int maxHp, boolean fainted, StatusCondition status, List<MoveDto> moves) {
         static CombatantDto of(Long monsterId, Monster m, boolean showMoves) {
             return new CombatantDto(monsterId, m.species().id(), m.species().name(), m.species().element(), m.level(),
-                    m.currentHp(), m.maxHp(), m.isFainted(), showMoves ? MoveDto.of(m) : null);
+                    m.currentHp(), m.maxHp(), m.isFainted(), m.status(), showMoves ? MoveDto.of(m) : null);
         }
     }
 

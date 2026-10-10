@@ -26,6 +26,13 @@ final class InMemoryPorts {
         return Monster.restore(m.species(), m.xp(), m.currentHp(), m.ppSnapshot());
     }
 
+    /** Copia tambem status e estagios, que so a batalha salva (como o jsonb). */
+    static Monster copyInBattle(Monster m) {
+        Monster c = copy(m);
+        c.restoreBattleState(m.status(), m.sleepTurns(), m.stages());
+        return c;
+    }
+
     static final class FixtureCatalog implements SpeciesCatalog {
         @Override public List<Species> findAll() { return Catalog.ALL; }
 
@@ -97,8 +104,8 @@ final class InMemoryPorts {
         }
 
         private static Battle.State copy(Battle.State s) {
-            return new Battle.State(s.playerTeam().stream().map(InMemoryPorts::copy).toList(),
-                    s.enemyTeam().stream().map(InMemoryPorts::copy).toList(),
+            return new Battle.State(s.playerTeam().stream().map(InMemoryPorts::copyInBattle).toList(),
+                    s.enemyTeam().stream().map(InMemoryPorts::copyInBattle).toList(),
                     s.playerActive(), s.enemyActive(), s.status(), s.log());
         }
     }

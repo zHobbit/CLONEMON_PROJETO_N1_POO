@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { registerArt } from '../art/textures';
 import { CSS, HEIGHT, SCENES, WIDTH } from '../config';
+import { registerEffectArt } from '../fx/hitEffects';
 import { api, catalog } from '../services';
 import { addText } from '../ui/widgets';
 
@@ -28,6 +29,7 @@ export class BootScene extends Phaser.Scene {
     }
     catalog.set(species);
     registerArt(this, species);
+    registerEffectArt(this);
     this.scene.start(SCENES.title);
   }
 }

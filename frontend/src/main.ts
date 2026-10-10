@@ -2,6 +2,7 @@ import '@fontsource/press-start-2p';
 import './style.css';
 import Phaser from 'phaser';
 import { COLORS, FONT_FAMILY, HEIGHT, SCENES, WIDTH } from './config';
+import { installTransitions } from './fx/transitions';
 import { BattleScene } from './scenes/BattleScene';
 import { BootScene } from './scenes/BootScene';
 import { HubScene } from './scenes/HubScene';
@@ -37,6 +38,7 @@ async function start(): Promise<void> {
   });
 
   window.addEventListener('resize', () => game.scale.setZoom(integerZoom()));
+  installTransitions(game);
 
   api.onUnauthorized = () => {
     for (const scene of game.scene.getScenes(true)) scene.scene.stop();

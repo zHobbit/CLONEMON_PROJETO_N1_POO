@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import type { Species } from '../api/types';
 import { addMenuBackground, addMonster, elementKey } from '../art/textures';
 import { COLORS, SCENES, WIDTH } from '../config';
+import { fadeTo } from '../fx/transitions';
 import { api, catalog } from '../services';
 import { onKey } from '../ui/input';
 import { Menu } from '../ui/Menu';
@@ -66,7 +67,7 @@ export class StarterScene extends Phaser.Scene {
       try {
         const starter = await api.chooseStarter(s.id);
         await this.textBox.sayAndWait(`Voce escolheu ${starter.species.toUpperCase()}! Cuide bem dele.`);
-        this.scene.start(SCENES.hub);
+        fadeTo(this, SCENES.hub);
       } catch {
         await this.textBox.sayAndWait('Nao foi possivel escolher. Tente de novo.');
       }

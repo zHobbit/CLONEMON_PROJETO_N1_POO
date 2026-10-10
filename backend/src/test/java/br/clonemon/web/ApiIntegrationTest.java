@@ -120,7 +120,7 @@ class ApiIntegrationTest {
         List<String> names = read(r, "$[*].name");
         assertThat(names).containsExactly("Lindoya", "Coiso", "Lucifer", "Olaf", "Groot", "EletroPaulo");
         List<Object> moves = read(r, "$[0].moves");
-        assertThat(moves).hasSize(2);
+        assertThat(moves).hasSize(4);
     }
 
     // --- Team ---

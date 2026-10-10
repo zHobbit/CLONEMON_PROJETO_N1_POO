@@ -21,6 +21,8 @@ export type Step =
   | { kind: 'hp'; side: Side; to: number }
   | { kind: 'faint'; side: Side }
   | { kind: 'switch'; teamIndex: number; hp: number }
+  /** O treinador adversario manda o proximo monstro (o da batalha devolvida no fim do turno). */
+  | { kind: 'enemySwitch'; hp: number }
   /** Troca o selo de status da caixa de informacoes. */
   | { kind: 'status'; side: Side; status: StatusCondition }
   /** Atributo subiu ou caiu. */
@@ -60,6 +62,11 @@ export function planTurn(initial: ViewState, events: TurnEvent[]): Step[] {
       steps.push({ kind: 'switch', teamIndex: e.playerActive, hp: e.playerHp });
       // O selo do monstro que entra ja vem do time; so mudancas depois disso viram passo.
       state = { ...state, playerActive: e.playerActive, playerHp: e.playerHp, playerStatus: e.playerStatus };
+    }
+
+    if (e.effect === 'ENEMY_SWITCH') {
+      steps.push({ kind: 'enemySwitch', hp: e.enemyHp });
+      state = { ...state, enemyHp: e.enemyHp, enemyStatus: e.enemyStatus };
     }
 
     steps.push({ kind: 'text', text: e.text });

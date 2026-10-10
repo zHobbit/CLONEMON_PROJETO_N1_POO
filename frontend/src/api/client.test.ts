@@ -73,6 +73,34 @@ describe('ApiClient', () => {
     expect(JSON.parse(init?.body as string)).toEqual({ action: 'MOVE', moveIndex: 1 });
   });
 
+  it('starts a wild battle without a body and an NPC battle with the npcId', async () => {
+    const { client, fetchFn } = setup('t', json(200, { id: 1 }));
+    await client.startBattle();
+    await client.startBattle('caio');
+    const [[url, wild], [, npc]] = fetchFn.mock.calls;
+    expect(url).toBe('/api/battles');
+    expect(wild?.method).toBe('POST');
+    expect(wild?.body).toBeUndefined();
+    expect(JSON.parse(npc?.body as string)).toEqual({ npcId: 'caio' });
+  });
+
+  it('reads the world state', async () => {
+    const state = { position: { x: 3, y: 4, facing: 'LEFT' }, defeatedNpcs: ['bia'] };
+    const { client, fetchFn } = setup('t', json(200, state));
+    await expect(client.world()).resolves.toEqual(state);
+    expect(fetchFn.mock.calls[0][0]).toBe('/api/world');
+  });
+
+  it('saves the position with PUT and accepts 204 No Content', async () => {
+    const { client, fetchFn } = setup('t', new Response(null, { status: 204 }));
+    await expect(client.savePosition({ x: 10, y: 2, facing: 'UP' })).resolves.toBeUndefined();
+    const [url, init] = fetchFn.mock.calls[0];
+    expect(url).toBe('/api/world/position');
+    expect(init?.method).toBe('PUT');
+    expect(init?.keepalive).toBe(true);
+    expect(JSON.parse(init?.body as string)).toEqual({ x: 10, y: 2, facing: 'UP' });
+  });
+
   it('logout forgets the token', () => {
     const { client } = setup('t');
     client.logout();

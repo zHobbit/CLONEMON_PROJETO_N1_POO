@@ -153,7 +153,7 @@ describe('viewOf', () => {
     });
     const battle: Battle = {
       id: 1, status: 'AWAITING_ACTION', playerActive: 1, playerTeam: [combatant(5), combatant(25, 'SLEEP')],
-      enemy: combatant(12, 'BURN'), log: [],
+      enemy: combatant(12, 'BURN'), log: [], npcId: null, npcName: null, enemyTeamSize: 1, enemyActive: 0,
     };
     expect(viewOf(battle)).toEqual({ playerActive: 1, playerHp: 25, enemyHp: 12, playerStatus: 'SLEEP', enemyStatus: 'BURN' });
   });

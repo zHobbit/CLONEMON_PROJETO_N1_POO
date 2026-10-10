@@ -10,6 +10,6 @@ public record SpeciesDto(long id, String name, Element element, int baseHp, int 
 
     public static SpeciesDto of(Species s) {
         return new SpeciesDto(s.id(), s.name(), s.element(), s.baseHp(), s.baseAtk(), s.baseDef(), s.baseSpd(),
-                s.moves().stream().map(m -> MoveDto.of(m, null)).toList());
+                MoveDto.of(s));
     }
 }

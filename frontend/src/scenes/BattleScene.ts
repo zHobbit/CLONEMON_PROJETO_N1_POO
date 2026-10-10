@@ -5,6 +5,7 @@ import { BATTLE_BG } from '../art/scenery';
 import { BG, addMonster, elementKey, showMonster } from '../art/textures';
 import { planTurn, type Side, type Step, type ViewState, viewOf } from '../battle/playback';
 import { SCENES, WIDTH } from '../config';
+import { BattleFx } from '../fx/BattleFx';
 import { api } from '../services';
 import { formatHp } from '../ui/hp';
 import { HpBar } from '../ui/HpBar';
@@ -63,6 +64,7 @@ export class BattleScene extends Phaser.Scene {
   private playerInfo!: InfoBox;
   private textBox!: TextBox;
   private actionCursor = 0;
+  private readonly fx = new BattleFx(this);
 
   constructor() {
     super(SCENES.battle);
@@ -105,6 +107,7 @@ export class BattleScene extends Phaser.Scene {
         );
         continue;
       }
+      this.fx.beginTurn(this.battle, res);
       for (const step of planTurn(this.view, res.events)) await this.play(step);
       this.sync(res.battle);
     }
@@ -204,10 +207,13 @@ export class BattleScene extends Phaser.Scene {
         return tween(this, { targets: s, x: s.x + dir * LUNGE, y: s.y - dir * LUNGE / 2, duration: 90, yoyo: true, ease: 'Quad.Out' });
       }
       case 'flash':
+        this.fx.hit(step.side, this.sprite(step.side));
         return tween(this, { targets: this.sprite(step.side), alpha: 0, duration: 70, yoyo: true, repeat: 2 });
       case 'hp':
+        this.fx.hp(step.side);
         return this.info(step.side).setHp(step.to, true);
       case 'faint': {
+        this.fx.faint(step.side);
         const s = this.sprite(step.side);
         return tween(this, { targets: s, y: s.y + 24, alpha: 0, duration: 400, ease: 'Quad.In' });
       }

@@ -23,7 +23,7 @@ export function elementKey(element: Element): string {
   return `el-${element}`;
 }
 
-function addTexture(scene: Phaser.Scene, key: string, frames: readonly PixelCanvas[]): void {
+export function addTexture(scene: Phaser.Scene, key: string, frames: readonly PixelCanvas[]): void {
   if (scene.textures.exists(key)) return;
   const { width, height, rgba } = sheet(frames);
   const tex = scene.textures.createCanvas(key, width, height);

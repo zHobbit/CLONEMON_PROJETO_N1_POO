@@ -4,7 +4,9 @@ import br.clonemon.domain.AiStrategy;
 import br.clonemon.domain.Battle;
 import br.clonemon.domain.Catalog;
 import br.clonemon.domain.DamageCalculator;
+import br.clonemon.domain.ExperienceCurve;
 import br.clonemon.domain.Monster;
+import br.clonemon.domain.StatusCondition;
 import org.junit.jupiter.api.Test;
 
 import java.util.random.RandomGenerator;
@@ -119,6 +121,40 @@ class BattleServiceTest {
 
         assertThat(last.events()).last().extracting(Battle.Event::text).isEqualTo("Coiso foi enviado para o PC.");
         assertThat(monsters.findByTrainer(TRAINER)).hasSize(7).last().extracting(OwnedMonster::teamSlot).isNull();
+    }
+
+    @Test
+    void moveLearnedInBattleIsSavedWithTheMonster() {
+        OwnedMonster hero = monsters.add(TRAINER, Catalog.LUCIFER, 6, 0);
+        // Faltam 80 XP para o nivel 7: a recompensa por um selvagem de nivel 4.
+        hero.monster().gainXp(ExperienceCurve.xpForLevel(7) - 80 - hero.monster().xp());
+        monsters.save(hero);
+        BattleService service = new BattleService(battles, monsters, new InMemoryPorts.FixtureCatalog(),
+                new DamageCalculator(STEADY), AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom(0, 3)); // Olaf
+        BattleSession s = service.start(TRAINER);
+
+        BattleService.TurnResult r = service.submitTurn(TRAINER, s.id(), new Battle.UseMove(1));
+
+        assertThat(r.events()).extracting(Battle.Event::text).contains("Lucifer aprendeu Churrasco grego!");
+        Monster saved = monsters.findByTrainer(TRAINER).getFirst().monster();
+        assertThat(saved.level()).isEqualTo(7);
+        assertThat(saved.ppSnapshot()).containsExactly(25, 9, 15);
+    }
+
+    @Test
+    void battleConditionsLastBetweenTurnsAndEndWithTheBattle() {
+        monsters.add(TRAINER, Catalog.GROOT, 20, 0);
+        BattleService service = serviceMeetingCoiso();
+        BattleSession s = service.start(TRAINER);
+
+        service.submitTurn(TRAINER, s.id(), new Battle.UseMove(3)); // Cha de camomila
+
+        Monster wild = service.get(TRAINER, s.id()).battle().enemyMonster();
+        assertThat(wild.status()).isEqualTo(StatusCondition.SLEEP);
+        assertThat(wild.sleepTurns()).isEqualTo(2);
+
+        service.submitTurn(TRAINER, s.id(), new Battle.Run());
+        assertThat(service.get(TRAINER, s.id()).battle().enemyMonster().status()).isEqualTo(StatusCondition.NONE);
     }
 
     @Test

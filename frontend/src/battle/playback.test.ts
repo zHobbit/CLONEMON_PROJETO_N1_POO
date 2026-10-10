@@ -145,6 +145,24 @@ describe('planTurn', () => {
   });
 });
 
+describe('planTurn with a trainer', () => {
+  it('shows the next enemy monster with its own hp, without animating an hp change', () => {
+    const steps = planTurn(start, [
+      ev('Coiso desmaiou!', { effect: 'ENEMY_FAINT', enemyHp: 0 }),
+      ev('CAIO enviou Olaf!', { effect: 'ENEMY_SWITCH', enemyHp: 30 }),
+    ]);
+    expect(steps).toEqual([
+      { kind: 'text', text: 'Coiso desmaiou!' },
+      { kind: 'hp', side: 'enemy', to: 0 },
+      { kind: 'faint', side: 'enemy' },
+      { kind: 'wait' },
+      { kind: 'enemySwitch', hp: 30 },
+      { kind: 'text', text: 'CAIO enviou Olaf!' },
+      { kind: 'wait' },
+    ]);
+  });
+});
+
 describe('viewOf', () => {
   it('reads the active monster, hp and status of both sides', () => {
     const combatant = (hp: number, status: StatusCondition = 'NONE') => ({

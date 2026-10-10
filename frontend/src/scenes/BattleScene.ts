@@ -81,10 +81,31 @@ class InfoBox {
   }
 }
 
+/**
+ * Bolinhas do time do treinador adversario no canto da caixa dele: vermelhas de pe, cinzas desmaiadas.
+ * Em batalha selvagem nao aparece nada.
+ */
+function drawTeamBalls(g: Phaser.GameObjects.Graphics, battle: Battle): void {
+  g.clear();
+  const size = battle.npcId ? (battle.enemyTeamSize ?? 0) : 0;
+  const active = battle.enemyActive ?? 0;
+  for (let i = 0; i < size; i++) {
+    const down = i < active || (i === active && battle.enemy.fainted);
+    const x = 111 - (size - 1 - i) * 7;
+    g.fillStyle(COLORS.frame);
+    g.fillCircle(x, 35, 3);
+    g.fillStyle(down ? COLORS.shadow : COLORS.accent);
+    g.fillCircle(x, 35, 2);
+  }
+}
+
 /** Batalha por turnos no estilo GBA, animada a partir dos eventos estruturados da API. */
 export class BattleScene extends Phaser.Scene {
   /** Exposto para os testes E2E. */
   battle!: Battle;
+  /** Estado devolvido pelo turno que esta sendo animado (de onde vem o proximo monstro do treinador). */
+  private pending: Battle | null = null;
+  private balls!: Phaser.GameObjects.Graphics;
   private view!: ViewState;
   private enemySprite!: Phaser.GameObjects.Sprite;
   private playerSprite!: Phaser.GameObjects.Sprite;
@@ -110,7 +131,15 @@ export class BattleScene extends Phaser.Scene {
     this.textBox = new TextBox(this);
     this.enemyInfo.show(this.battle.enemy);
     this.playerInfo.show(this.active());
+    this.balls = this.add.graphics();
+    drawTeamBalls(this.balls, this.battle);
+    this.pending = null;
     void this.run();
+  }
+
+  /** Batalha contra um treinador: nao da para fugir e ele tem um time. */
+  private get trainer(): string | null {
+    return this.battle.npcId ? (this.battle.npcName ?? this.battle.npcId.toUpperCase()) : null;
   }
 
   private active(): Combatant {
@@ -136,20 +165,26 @@ export class BattleScene extends Phaser.Scene {
         continue;
       }
       this.fx.beginTurn(this.battle, res);
+      this.pending = res.battle;
       for (const step of planTurn(this.view, res.events)) await this.play(step);
       this.sync(res.battle);
     }
 
+    // De volta ao mapa, que precisa saber como acabou (derrota leva ao Centro; vitoria marca o treinador).
+    const outcome = { status: this.battle.status, npcId: this.battle.npcId ?? null };
     const cam = this.cameras.main;
-    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start(SCENES.hub));
+    cam.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start(SCENES.world, { outcome }));
     cam.fadeOut(300);
   }
 
   private async intro(): Promise<void> {
     this.playerSprite.setAlpha(0);
     this.enemySprite.setX(WIDTH + 40);
+    const enemy = this.battle.enemy.name.toUpperCase();
+    const trainer = this.trainer;
+    if (trainer) await this.textBox.sayAndWait(`${trainer} quer batalhar!`);
     await tween(this, { targets: this.enemySprite, x: ENEMY_POS.x, duration: 500, ease: 'Quad.Out' });
-    await this.textBox.sayAndWait(`Um ${this.battle.enemy.name.toUpperCase()} selvagem apareceu!`);
+    await this.textBox.sayAndWait(trainer ? `${trainer} enviou ${enemy}!` : `Um ${enemy} selvagem apareceu!`);
     this.playerSprite.setX(-40).setAlpha(1);
     await tween(this, { targets: this.playerSprite, x: PLAYER_POS.x, duration: 400, ease: 'Quad.Out' });
     await this.textBox.sayAndWait(`Vai, ${this.active().name.toUpperCase()}!`);
@@ -159,7 +194,7 @@ export class BattleScene extends Phaser.Scene {
     this.textBox.setWrapWidth(120);
     this.textBox.setText(`O que ${this.active().name.toUpperCase()} vai fazer?`);
     const frame = addFrame(this, 136, 112, 104, 48);
-    const menu = new Menu(this, [{ label: 'LUTAR' }, { label: 'TIME' }, { label: 'FUGIR' }], {
+    const menu = new Menu(this, [{ label: 'LUTAR' }, { label: 'TIME' }, { label: 'FUGIR', disabled: this.trainer !== null }], {
       x: 140,
       y: 124,
       columns: 2,
@@ -245,8 +280,11 @@ export class BattleScene extends Phaser.Scene {
       case 'hp':
         this.fx.hp(step.side);
         return this.info(step.side).setHp(step.to, true);
+      case 'enemySwitch':
+        return this.enemySwitch(step.hp);
       case 'faint': {
         this.fx.faint(step.side);
+        if (step.side === 'enemy') drawTeamBalls(this.balls, { ...this.battle, enemy: { ...this.battle.enemy, fainted: true } });
         const s = this.sprite(step.side);
         return tween(this, { targets: s, y: s.y + 24, alpha: 0, duration: 400, ease: 'Quad.In' });
       }
@@ -273,9 +311,22 @@ export class BattleScene extends Phaser.Scene {
     await tween(this, { targets: s, x: PLAYER_POS.x, duration: 300, ease: 'Quad.Out' });
   }
 
+  /** O treinador manda o proximo monstro: entra pela direita, com a caixa de informacoes nova. */
+  private async enemySwitch(hp: number): Promise<void> {
+    const next = this.pending ?? this.battle;
+    const s = this.enemySprite;
+    showMonster(s, next.enemy.speciesId, 'front');
+    s.setPosition(WIDTH + 40, ENEMY_POS.y).setAlpha(1);
+    this.enemyInfo.show(next.enemy, hp);
+    drawTeamBalls(this.balls, { ...next, enemy: { ...next.enemy, fainted: false } });
+    await tween(this, { targets: s, x: ENEMY_POS.x, duration: 400, ease: 'Quad.Out' });
+  }
+
   /** Alinha a tela com o estado oficial devolvido pela API. */
   private sync(battle: Battle): void {
     this.battle = battle;
+    this.pending = null;
+    drawTeamBalls(this.balls, battle);
     this.view = viewOf(battle);
     const a = this.active();
     showMonster(this.playerSprite, a.speciesId, 'back');

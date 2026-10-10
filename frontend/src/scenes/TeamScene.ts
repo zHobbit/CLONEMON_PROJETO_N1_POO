@@ -47,7 +47,7 @@ export class TeamScene extends Phaser.Scene {
     for (;;) {
       const monster = await this.browse();
       if (!monster) {
-        fadeTo(this, SCENES.hub, { roster: this.roster });
+        fadeTo(this, SCENES.world, { roster: this.roster });
         return;
       }
       const actions = availableActions(this.roster, monster.id);

@@ -82,6 +82,8 @@ Vite + TypeScript + Phaser 4, em 240x160 (resolução do GBA) com escala inteira
 | `src/scenes` | Boot, Título, Login (formulário HTML), Inicial, Menu, Time, Batalha |
 | `src/ui` | Caixa de texto, menus, barra de HP, teclado |
 | `src/art` | Pixel art feita em código (veja abaixo) |
+| `src/audio` | Música e efeitos sonoros sintetizados com Web Audio (pulso, triângulo e ruído, como no Game Boy); tecla M liga e desliga |
+| `src/fx` | Fades entre cenas, entrada de batalha e efeitos de golpe por elemento |
 
 ### Pixel art
 

@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { BG, addMonster } from '../art/textures';
+import { audio } from '../audio';
 import { CSS, HEIGHT, SCENES, WIDTH } from '../config';
+import { fadeTo } from '../fx/transitions';
 import { api, catalog } from '../services';
 import { waitConfirm } from '../ui/input';
 import { addText } from '../ui/widgets';
@@ -31,8 +33,9 @@ export class TitleScene extends Phaser.Scene {
 
   private async waitStart(prompt: Phaser.GameObjects.Text): Promise<void> {
     await waitConfirm(this);
+    audio.sfx('confirm');
     if (!api.isLoggedIn()) {
-      this.scene.start(SCENES.login);
+      fadeTo(this, SCENES.login);
       return;
     }
     try {

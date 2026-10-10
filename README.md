@@ -37,7 +37,7 @@ Os tipos funcionam em ciclo: cada um causa o dobro de dano no seguinte e metade 
 
 O progresso é salvo a cada turno: dá para fechar o navegador no meio de uma batalha e continuar depois.
 
-**Controles:** setas navegam, Enter / Espaço / Z confirmam, Esc / Backspace / X voltam. O mouse também funciona.
+**Controles:** setas navegam, Enter / Espaço / Z confirmam, Esc / Backspace / X voltam, M liga e desliga o som. O mouse também funciona.
 
 ## Rodando localmente
 

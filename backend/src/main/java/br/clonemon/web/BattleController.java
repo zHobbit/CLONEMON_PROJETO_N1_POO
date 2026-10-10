@@ -3,6 +3,7 @@ package br.clonemon.web;
 import br.clonemon.application.BattleService;
 import br.clonemon.application.NotFoundException;
 import br.clonemon.web.dto.BattleDtos.BattleDto;
+import br.clonemon.web.dto.BattleDtos.StartRequest;
 import br.clonemon.web.dto.BattleDtos.TurnRequest;
 import br.clonemon.web.dto.BattleDtos.TurnResponse;
 import jakarta.validation.Valid;
@@ -26,10 +27,12 @@ class BattleController {
 
     BattleController(BattleService battles) { this.battles = battles; }
 
+    /** Sem corpo (ou sem {@code npcId}): selvagem. Com {@code npcId}: desafia o treinador do mapa. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    BattleDto start(@AuthenticationPrincipal Jwt jwt) {
-        return BattleDto.of(battles.start(trainerId(jwt)));
+    BattleDto start(@AuthenticationPrincipal Jwt jwt, @RequestBody(required = false) StartRequest req) {
+        long trainer = trainerId(jwt);
+        return BattleDto.of(req == null || req.npcId() == null ? battles.start(trainer) : battles.challenge(trainer, req.npcId()));
     }
 
     @GetMapping("/active")

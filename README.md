@@ -15,25 +15,27 @@ Spring Boot + PostgreSQL no backend e Phaser no navegador.
 
 Os 6 originais são as opções de inicial:
 
-| Clonemon | Tipo | Golpes |
-|---|---|---|
-| Lindoya | ÁGUA | Cuspe, Vap de alta pressão |
-| Coiso | ROCHA | Pedrada, Meteoro |
-| Lucifer | FOGO | Molotov, Fogo na Babilônia |
-| Olaf | GELO | Cubo de gelo, Fica frio aí |
-| Groot | GRAMA | Corte de papel A4, Cartolinada |
-| EletroPaulo | RAIO | Volt, Bivolt |
+| Clonemon | Tipo | Golpes iniciais | Nível 7 | Nível 12 |
+|---|---|---|---|---|
+| Lindoya | ÁGUA | Cuspe, Vap de alta pressão | Piso molhado | Água de salsicha |
+| Coiso | ROCHA | Pedrada, Meteoro | Casca grossa | Pedra no sapato |
+| Lucifer | FOGO | Molotov, Fogo na Babilônia | Churrasco grego | Sangue nos olhos |
+| Olaf | GELO | Cubo de gelo, Fica frio aí | Frio na barriga | Picolé de chuchu |
+| Groot | GRAMA | Corte de papel A4, Cartolinada | Urtigada | Chá de camomila |
+| EletroPaulo | RAIO | Volt, Bivolt | Conta de luz | Dedo na tomada |
 
 E estes 6 só aparecem na natureza (vença para recrutar):
 
-| Clonemon | Tipo | O que é | Golpes |
-|---|---|---|---|
-| Boto | ÁGUA | O boto cor-de-rosa da lenda, de chapéu branco | Esguicho, Pororoca |
-| PaoDeAcucar | ROCHA | O morro do Rio como pão doce, com confeitos e bondinho | Pedra portuguesa, Bondinho |
-| Pimentinha | FOGO | Pimenta dedo-de-moça levada, com o rabo pegando fogo | Ardidinha, Pimenta nos olhos |
-| Pinguim | GELO | O pinguim de louça de cima da geladeira | Ímã de geladeira, Fecha a geladeira |
-| Abacaxi | GRAMA | Abacaxi casca grossa, de poucos amigos | Coroada, Descascar o abacaxi |
-| Gatonet | RAIO | Um "gato" de luz em forma de gato, com rabo de fio | Gambiarra, Apagão |
+| Clonemon | Tipo | O que é | Golpes iniciais | Nível 7 | Nível 12 |
+|---|---|---|---|---|---|
+| Boto | ÁGUA | O boto cor-de-rosa da lenda, de chapéu branco | Esguicho, Pororoca | Papo de boto | Rodamoinho |
+| PaoDeAcucar | ROCHA | O morro do Rio como pão doce, com confeitos e bondinho | Pedra portuguesa, Bondinho | Cobertura extra | Morro abaixo |
+| Pimentinha | FOGO | Pimenta dedo-de-moça levada, com o rabo pegando fogo | Ardidinha, Pimenta nos olhos | Molho de pimenta | Malagueta |
+| Pinguim | GELO | O pinguim de louça de cima da geladeira | Ímã de geladeira, Fecha a geladeira | Escorregão | Congelador |
+| Abacaxi | GRAMA | Abacaxi casca grossa, de poucos amigos | Coroada, Descascar o abacaxi | Folha da coroa | Sono pós-almoço |
+| Gatonet | RAIO | Um "gato" de luz em forma de gato, com rabo de fio | Gambiarra, Apagão | Fio desencapado | Sete vidas |
+
+Todos aprendem 2 golpes novos ao subir de nível, alguns com efeitos de status (queimar, congelar, paralisar, dormir) ou que mudam atributos.
 
 Os tipos funcionam em ciclo: cada um causa o dobro de dano no seguinte e metade no anterior.
 

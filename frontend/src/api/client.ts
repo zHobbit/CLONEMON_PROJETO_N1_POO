@@ -1,4 +1,14 @@
-import type { Battle, Monster, Roster, Species, TokenResponse, TurnAction, TurnResponse } from './types';
+import type {
+  Battle,
+  Monster,
+  Roster,
+  Species,
+  TokenResponse,
+  TurnAction,
+  TurnResponse,
+  WorldPosition,
+  WorldState,
+} from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -108,8 +118,18 @@ export class ApiClient {
     return this.request('POST', '/team/heal');
   }
 
-  startBattle(): Promise<Battle> {
-    return this.request('POST', '/battles');
+  /** Sem npcId: batalha selvagem. Com npcId: desafio do treinador (409 se ja vencido ou time sem condicoes). */
+  startBattle(npcId?: string): Promise<Battle> {
+    return this.request('POST', '/battles', npcId === undefined ? undefined : { npcId });
+  }
+
+  world(): Promise<WorldState> {
+    return this.request('GET', '/world');
+  }
+
+  /** keepalive: o pedido sobrevive a aba sendo fechada ou recarregada. */
+  savePosition(position: WorldPosition): Promise<void> {
+    return this.request('PUT', '/world/position', position, { keepalive: true });
   }
 
   /** A batalha em andamento, ou null se nao houver. */
@@ -126,13 +146,14 @@ export class ApiClient {
     return this.request('POST', `/battles/${battleId}/turns`, action);
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  private async request<T>(method: string, path: string, body?: unknown, extra: RequestInit = {}): Promise<T> {
     const token = this.tokens.get();
     const headers: Record<string, string> = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;
 
     const res = await this.fetchFn(this.base + path, {
+      ...extra,
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -143,6 +164,7 @@ export class ApiClient {
       this.onUnauthorized();
     }
     if (!res.ok) throw new ApiError(res.status, await problemDetail(res));
+    if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
   }
 }

@@ -87,6 +87,12 @@ export interface Battle {
   playerTeam: Combatant[];
   enemy: Combatant;
   log: string[];
+  /** Treinador adversario (ex.: "caio"); nulo em batalha selvagem. */
+  npcId: string | null;
+  npcName: string | null;
+  /** Tamanho do time do oponente (1 na selvagem) e indice do monstro dele em campo. */
+  enemyTeamSize: number;
+  enemyActive: number;
 }
 
 export type Effect =
@@ -134,6 +140,20 @@ export type TurnAction =
   | { action: 'MOVE'; moveIndex: number }
   | { action: 'SWITCH'; teamIndex: number }
   | { action: 'RUN' };
+
+export type Facing = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT';
+
+export interface WorldPosition {
+  x: number;
+  y: number;
+  facing: Facing;
+}
+
+/** Progresso no mapa: posicao salva (nula = ponto de partida do mapa) e treinadores ja vencidos. */
+export interface WorldState {
+  position: WorldPosition | null;
+  defeatedNpcs: string[];
+}
 
 export interface TokenResponse {
   token: string;

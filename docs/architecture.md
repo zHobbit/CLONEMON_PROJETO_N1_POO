@@ -64,7 +64,9 @@ sem precisar interpretar o texto.
 | PUT | `/api/team` | Define o time: `{ "monsterIds": [..] }` (1 a 6, na ordem) |
 | POST | `/api/team/starter` | Escolhe o inicial: `{ "speciesId": 3 }` |
 | POST | `/api/team/heal` | Centro Clonemon (fora de batalha) |
-| POST | `/api/battles` | Inicia batalha contra um clonemon selvagem |
+| GET | `/api/world` | Progresso no mapa: `{ "position": { "x", "y", "facing" } \| null, "defeatedNpcs": ["caio"] }` (posição nula = ponto de partida) |
+| PUT | `/api/world/position` | Salva a posição: `{ "x": 19, "y": 14, "facing": "LEFT" }` (204) |
+| POST | `/api/battles` | Inicia batalha contra um clonemon selvagem; com `{ "npcId": "caio" }`, contra um treinador (404 desconhecido, 409 já vencido) |
 | GET | `/api/battles/active` | Batalha em andamento (404 se não houver) |
 | GET | `/api/battles/{id}` | Estado de uma batalha |
 | POST | `/api/battles/{id}/turns` | `{ "action": "MOVE", "moveIndex": 0 }`, `{ "action": "SWITCH", "teamIndex": 1 }` ou `{ "action": "RUN" }` |
@@ -79,11 +81,27 @@ Vite + TypeScript + Phaser 4, em 240x160 (resolução do GBA) com escala inteira
 |---|---|
 | `src/api` | Tipos da API e `ApiClient` (token no localStorage; 401 leva ao login) |
 | `src/battle` | `planTurn`: transforma eventos de turno em passos de animação (lógica pura, testada) |
-| `src/scenes` | Boot, Título, Login (formulário HTML), Inicial, Menu, Time, Batalha |
+| `src/scenes` | Boot, Título, Login (formulário HTML), Inicial, Mapa (tela principal), Time, Batalha |
+| `src/world` | O mapa em texto, colisão, visão dos treinadores, encontros e salvamento da posição (lógica pura, testada) |
 | `src/ui` | Caixa de texto, menus, barra de HP, teclado |
 | `src/art` | Pixel art feita em código (veja abaixo) |
 | `src/audio` | Música e efeitos sonoros sintetizados com Web Audio (pulso, triângulo e ruído, como no Game Boy); tecla M liga e desliga |
 | `src/fx` | Fades entre cenas, entrada de batalha e efeitos de golpe por elemento |
+
+### Mapa
+
+Depois do login o jogo abre direto no mapa (`WorldScene`): a Vila Capim ao sul e a Rota 1 ao norte, 40x30 ladrilhos de 16px.
+Batalha em andamento volta para a batalha; treinador sem monstros vai para a escolha do inicial.
+
+- `world/maps.ts`: o mapa desenhado como texto (um caractere por ladrilho, veja `LEGEND`), construções com porta, placas e os treinadores CAIO, BIA e ZECA com posição, direção, alcance da visão e falas.
+- `world/grid.ts`: colisão (água, árvores, pedras, cercas, placas, construções e personagens bloqueiam), passo, linha de visão.
+- `world/encounter.ts` e `world/saver.ts`: 12% de chance de encontro por passo no capim alto (sorteio injetável) e o salvamento da posição.
+- Movimento em grade, um ladrilho por vez, segurando a seta para continuar; esbarrar numa parede anda no lugar.
+- Enter interage com o que está à frente (placa, treinador, porta); sem nada à frente, ou com Esc, abre o menu (TIME e SAIR).
+- Treinador invicto que vê o jogador mostra "!", vem até ele e desafia (`POST /api/battles` com `npcId`). Contra treinador não dá para fugir.
+- A porta do Centro Clonemon cura o time; perder uma batalha leva de volta à porta do Centro, já curado.
+- A posição vai para o servidor ao entrar em batalha, depois de curar, a cada 10 passos e ao sair da cena.
+- A arte do mapa fica em `art/worldTextures.ts` (ladrilhos indexados pelo enum `Tile`, personagens 16x24 com 3 quadros por direção).
 
 ### Pixel art
 
@@ -106,5 +124,5 @@ ou rode `npm run art:preview` para salvar um print em `test-results/screens/art-
 | Casos de uso | JUnit com portas em memória | Autenticação, time, batalha, recrutamento, salvamento |
 | Persistência | Testcontainers (Postgres real) | Seed, ida e volta das entidades, `jsonb`, restrições |
 | API | MockMvc + Testcontainers | Autenticação, contratos, erros, batalha completa |
-| Frontend | Vitest | Cliente da API, animação de turno, HP, navegação, time, arte |
-| Ponta a ponta | Playwright | Criar treinador, escolher inicial, batalhar, recarregar e conferir o save |
+| Frontend | Vitest | Cliente da API, animação de turno, HP, navegação, time, arte, mapa (validação, colisão, visão, encontros, salvamento) |
+| Ponta a ponta | Playwright | Criar treinador, escolher inicial, andar até o capim alto, batalhar, recarregar e conferir posição e save; treinador, placas, menu e Centro (`world.spec.ts`, com `/api/world` e a batalha do treinador simulados na página) |

@@ -2,14 +2,31 @@
 
 export type Element = 'AGUA' | 'ROCHA' | 'FOGO' | 'GELO' | 'GRAMA' | 'RAIO';
 
+/** Status de batalha; some quando a batalha termina. */
+export type StatusCondition = 'NONE' | 'BURN' | 'FREEZE' | 'PARALYSIS' | 'SLEEP';
+
+export type Stat = 'ATK' | 'DEF' | 'SPD';
+
+/** Status aplicado no alvo, RAISE (sobe atributo de quem usa) ou LOWER (baixa atributo do alvo). */
+export type MoveEffect = 'NONE' | 'BURN' | 'FREEZE' | 'PARALYSIS' | 'SLEEP' | 'RAISE' | 'LOWER';
+
 export interface Move {
   name: string;
   element: Element;
+  /** 0 = golpe de status. */
   power: number;
   accuracy: number;
   maxPp: number;
   /** Nulo no catalogo de especies. */
   ppLeft: number | null;
+  /** Nivel em que a especie aprende o golpe. */
+  learnLevel: number;
+  effect: MoveEffect;
+  /** Chance do efeito, em %, quando o golpe acerta. */
+  effectChance: number;
+  /** So para RAISE e LOWER. */
+  effectStat: Stat | null;
+  effectStages: number;
 }
 
 export interface Species {
@@ -58,6 +75,7 @@ export interface Combatant {
   currentHp: number;
   maxHp: number;
   fainted: boolean;
+  status: StatusCondition;
   /** Nulo para o oponente. */
   moves: Move[] | null;
 }
@@ -81,7 +99,21 @@ export type Effect =
   | 'ENEMY_SWITCH'
   | 'WON'
   | 'LOST'
-  | 'FLED';
+  | 'FLED'
+  /** Ganhou um status (o novo status vem em playerStatus/enemyStatus). */
+  | 'PLAYER_STATUS'
+  | 'ENEMY_STATUS'
+  /** Acordou ou descongelou. */
+  | 'PLAYER_CURE'
+  | 'ENEMY_CURE'
+  /** Dano da queimadura no fim do turno. */
+  | 'PLAYER_STATUS_DAMAGE'
+  | 'ENEMY_STATUS_DAMAGE'
+  | 'PLAYER_STAT_UP'
+  | 'PLAYER_STAT_DOWN'
+  | 'ENEMY_STAT_UP'
+  | 'ENEMY_STAT_DOWN'
+  | 'MOVE_LEARNED';
 
 export interface TurnEvent {
   text: string;
@@ -89,6 +121,8 @@ export interface TurnEvent {
   playerActive: number;
   playerHp: number;
   enemyHp: number;
+  playerStatus: StatusCondition;
+  enemyStatus: StatusCondition;
 }
 
 export interface TurnResponse {

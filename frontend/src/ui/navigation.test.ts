@@ -16,6 +16,11 @@ describe('mapKey', () => {
     expect(mapKey('H')).toBe('history');
   });
 
+  it('maps V to the replay viewpoint', () => {
+    expect(mapKey('v')).toBe('view');
+    expect(mapKey('V')).toBe('view');
+  });
+
   it('ignores other keys', () => {
     expect(mapKey('a')).toBeUndefined();
     expect(mapKey('Tab')).toBeUndefined();

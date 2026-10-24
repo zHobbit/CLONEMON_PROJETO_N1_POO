@@ -58,7 +58,7 @@ class TrainerBattleServiceTest {
         assertThat(s.npcId()).isEqualTo("caio");
         assertThat(s.battle().opponentName()).isEqualTo("CAIO");
         assertThat(s.battle().enemyTeam()).extracting(m -> m.species().name(), m -> m.level())
-                .containsExactly(tuple("Pimentinha", 2), tuple("Gatonet", 2));
+                .containsExactly(tuple("Boto", 1), tuple("Pimentinha", 1));
         BattleSession restored = service.get(TRAINER, s.id());
         assertThat(restored.npcId()).isEqualTo("caio");
         assertThat(restored.battle().opponentName()).isEqualTo("CAIO");
@@ -69,10 +69,10 @@ class TrainerBattleServiceTest {
         monsters.add(TRAINER, Catalog.GROOT, 3, 0);
         BattleSession s = service.challenge(TRAINER, "caio");
 
-        // Pimentinha conhece Ardidinha (40) e Pimenta nos olhos (90, 85%): o guloso escolhe a segunda.
+        // Boto conhece Esguicho (40) e Pororoca (90, 85%): o guloso escolhe Pororoca.
         List<Battle.Event> events = service.submitTurn(TRAINER, s.id(), new Battle.UseMove(0)).events();
 
-        assertThat(events).extracting(Battle.Event::text).contains("Pimentinha usou Pimenta nos olhos!");
+        assertThat(events).extracting(Battle.Event::text).contains("Boto usou Pororoca!");
     }
 
     @Test
@@ -95,7 +95,7 @@ class TrainerBattleServiceTest {
         List<Battle.Event> events = playUntilFinished(s.id(), 1);
 
         assertThat(service.get(TRAINER, s.id()).battle().status()).isEqualTo(Battle.Status.PLAYER_WON);
-        assertThat(events).extracting(Battle.Event::text).contains("CAIO enviou Gatonet!", "Voce venceu!");
+        assertThat(events).extracting(Battle.Event::text).contains("CAIO enviou Pimentinha!", "Voce venceu!");
         assertThat(events).last().extracting(Battle.Event::text).isEqualTo("Voce derrotou CAIO!");
         assertThat(monsters.findByTrainer(TRAINER)).hasSize(1);
         assertThat(monsters.findByTrainer(TRAINER).getFirst().monster().xp()).isGreaterThan(xpBefore);

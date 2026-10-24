@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Move } from '../api/types';
-import { STATUS_BADGE, effectLabel, moveInfo, moveRow } from './labels';
+import { INFO_COLUMNS, STATUS_BADGE, effectLabel, matchup, moveInfo, moveRow } from './labels';
 
 function move(partial: Partial<Move> = {}): Move {
   return {
@@ -48,5 +48,31 @@ describe('moveInfo', () => {
   it('fits the line next to the type icon', () => {
     const longest = move({ power: 80, accuracy: 100, effect: 'LOWER', effectChance: 30, effectStat: 'SPD', effectStages: 1 });
     expect(moveInfo(longest).length).toBeLessThanOrEqual(26);
+  });
+});
+
+describe('matchup', () => {
+  it('rates damaging moves against the defender element', () => {
+    expect(matchup(move({ element: 'AGUA' }), 'ROCHA')).toBe('super');
+    expect(matchup(move({ element: 'AGUA' }), 'RAIO')).toBe('weak');
+    expect(matchup(move({ element: 'AGUA' }), 'FOGO')).toBe('neutral');
+  });
+
+  it('is neutral for status moves, which deal no damage', () => {
+    expect(matchup(move({ element: 'AGUA', power: 0 }), 'ROCHA')).toBe('neutral');
+  });
+});
+
+describe('moveInfo against a defender', () => {
+  it('appends SUPER! or FRACO', () => {
+    expect(moveInfo(move({ element: 'AGUA' }), 'ROCHA')).toBe('POD 40 PRE 100 SUPER!');
+    expect(moveInfo(move({ element: 'AGUA' }), 'RAIO')).toBe('POD 40 PRE 100 FRACO');
+    expect(moveInfo(move({ element: 'AGUA' }), 'FOGO')).toBe('POD 40 PRE 100');
+  });
+
+  it('drops the tag when the line would not fit (the row arrow still shows it)', () => {
+    const long = move({ power: 80, accuracy: 90, effect: 'LOWER', effectChance: 30, effectStat: 'ATK', effectStages: 1 });
+    expect(moveInfo(long, 'RAIO')).toBe('POD 80 PRE 90 ATK-1 30%');
+    expect(moveInfo(long, 'RAIO').length).toBeLessThanOrEqual(INFO_COLUMNS);
   });
 });

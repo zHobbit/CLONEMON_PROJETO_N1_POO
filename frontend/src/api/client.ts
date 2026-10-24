@@ -1,6 +1,8 @@
 import type {
   Battle,
   Monster,
+  Replay,
+  ReplaySummary,
   Roster,
   Species,
   TokenResponse,
@@ -144,6 +146,16 @@ export class ApiClient {
 
   submitTurn(battleId: number, action: TurnAction): Promise<TurnResponse> {
     return this.request('POST', `/battles/${battleId}/turns`, action);
+  }
+
+  /** As batalhas terminadas mais recentes (ate 20), da mais nova para a mais antiga. */
+  replays(): Promise<ReplaySummary[]> {
+    return this.request('GET', '/replays');
+  }
+
+  /** 404 se o replay nao existe mais (a lista guarda so os 20 mais novos). */
+  replay(id: number): Promise<Replay> {
+    return this.request('GET', `/replays/${id}`);
   }
 
   private async request<T>(method: string, path: string, body?: unknown, extra: RequestInit = {}): Promise<T> {

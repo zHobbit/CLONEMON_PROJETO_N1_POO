@@ -4,6 +4,11 @@ import br.clonemon.application.port.BattleRepository;
 import br.clonemon.application.port.BattleRepository.StoredBattle;
 import br.clonemon.application.port.MonsterRepository;
 import br.clonemon.application.port.NpcCatalog;
+import br.clonemon.application.port.ReplayRepository;
+import br.clonemon.application.port.ReplayRepository.Combatant;
+import br.clonemon.application.port.ReplayRepository.Growth;
+import br.clonemon.application.port.ReplayRepository.Snapshot;
+import br.clonemon.application.port.ReplayRepository.Turn;
 import br.clonemon.application.port.SpeciesCatalog;
 import br.clonemon.application.port.WorldRepository;
 import br.clonemon.domain.AiStrategy;
@@ -33,22 +38,28 @@ public class BattleService {
     /** Treinadores escolhem sempre o golpe com maior dano esperado; selvagens usam a IA injetada. */
     private static final AiStrategy TRAINER_AI = AiStrategy.greedy();
 
+    /** Replays guardados por treinador: so os mais novos ja terminados. */
+    public static final int REPLAYS_KEPT = 20;
+
     private final BattleRepository battles;
     private final MonsterRepository monsters;
     private final SpeciesCatalog catalog;
     private final NpcCatalog npcs;
     private final WorldRepository world;
+    private final ReplayRepository replays;
     private final DamageCalculator calc;
     private final AiStrategy ai;
     private final RandomGenerator rng;
 
     public BattleService(BattleRepository battles, MonsterRepository monsters, SpeciesCatalog catalog, NpcCatalog npcs,
-                         WorldRepository world, DamageCalculator calc, AiStrategy ai, RandomGenerator rng) {
+                         WorldRepository world, ReplayRepository replays, DamageCalculator calc, AiStrategy ai,
+                         RandomGenerator rng) {
         this.battles = battles;
         this.monsters = monsters;
         this.catalog = catalog;
         this.npcs = npcs;
         this.world = world;
+        this.replays = replays;
         this.calc = calc;
         this.ai = ai;
         this.rng = rng;
@@ -58,7 +69,9 @@ public class BattleService {
     public BattleSession start(long trainerId) {
         List<OwnedMonster> team = readyTeam(trainerId);
         Battle battle = new Battle(team.stream().map(OwnedMonster::monster).toList(), List.of(wildMonster(team)), calc, ai);
-        return persist(new BattleSession(null, trainerId, null, team.stream().map(OwnedMonster::id).toList(), battle));
+        BattleSession saved = persist(new BattleSession(null, trainerId, null, team.stream().map(OwnedMonster::id).toList(), battle));
+        replays.start(saved.id(), trainerId, battle.enemyMonster().species().name() + " selvagem", snapshot(battle));
+        return saved;
     }
 
     /** Desafia um treinador do mapa. Cada um so pode ser derrotado uma vez. */
@@ -67,7 +80,9 @@ public class BattleService {
         if (world.hasDefeated(trainerId, npc.id())) throw new ConflictException("NPC already defeated: " + npc.id());
         List<OwnedMonster> team = readyTeam(trainerId);
         Battle battle = new Battle(team.stream().map(OwnedMonster::monster).toList(), npc.freshTeam(), npc.name(), calc, TRAINER_AI);
-        return persist(new BattleSession(null, trainerId, npc.id(), team.stream().map(OwnedMonster::id).toList(), battle));
+        BattleSession saved = persist(new BattleSession(null, trainerId, npc.id(), team.stream().map(OwnedMonster::id).toList(), battle));
+        replays.start(saved.id(), trainerId, npc.name(), snapshot(battle));
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -97,7 +112,25 @@ public class BattleService {
             events.add(session.battle().narrate(session.npcId() == null
                     ? recruit(trainerId, session.battle().enemyTeam().getFirst())
                     : recordDefeat(session)));
-        return new TurnResult(events, persist(session));
+        BattleSession saved = persist(session);
+        replays.appendTurn(saved.id(), new Turn(events, growth(saved.battle())));
+        if (saved.battle().isFinished()) {
+            replays.finish(saved.id(), saved.battle().status());
+            replays.prune(trainerId, REPLAYS_KEPT);
+        }
+        return new TurnResult(events, saved);
+    }
+
+    /** Times dos dois lados como comecaram a batalha, para o replay. */
+    private static Snapshot snapshot(Battle b) {
+        return new Snapshot(b.playerTeam().stream().map(Combatant::of).toList(),
+                b.enemyTeam().stream().map(Combatant::of).toList(),
+                b.playerActiveIndex(), b.enemyActiveIndex(), b.opponentName());
+    }
+
+    /** Nivel e HP maximo do time do jogador depois do turno (mudam ao subir de nivel). */
+    private static List<Growth> growth(Battle b) {
+        return b.playerTeam().stream().map(m -> new Growth(m.level(), m.maxHp())).toList();
     }
 
     private List<OwnedMonster> readyTeam(long trainerId) {

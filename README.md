@@ -51,10 +51,11 @@ Os tipos funcionam em ciclo: cada um causa o dobro de dano no seguinte e metade 
 4. Os treinadores CAIO, BIA e ZECA vigiam a rota: quem cruza a linha de visão deles é desafiado (e não dá para fugir).
 5. No **Centro Clonemon** (o prédio de telhado vermelho) o time recupera HP e PP. Enter lê placas e conversa.
 6. Enter sem nada à frente, ou Esc, abre o menu: em **TIME** você organiza a ordem e troca monstros entre o time e o PC.
+7. Na batalha, a seta ao lado de cada golpe mostra se ele é super efetivo (▲ verde) ou fraco (▼ cinza) contra o oponente, o dano aparece em % sobre o monstro, e **H** abre o histórico da batalha, turno a turno. Batalhas longas aceleram sozinhas.
 
 O progresso é salvo a cada turno: dá para fechar o navegador no meio de uma batalha e continuar depois.
 
-**Controles:** setas navegam, Enter / Espaço / Z confirmam, Esc / Backspace / X voltam, M liga e desliga o som. O mouse também funciona.
+**Controles:** setas navegam, Enter / Espaço / Z confirmam, Esc / Backspace / X voltam, M liga e desliga o som, H mostra o histórico na batalha. O mouse também funciona.
 
 ## Rodando localmente
 

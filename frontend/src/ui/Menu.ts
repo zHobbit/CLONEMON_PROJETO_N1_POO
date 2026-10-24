@@ -27,6 +27,7 @@ export class Menu {
   private readonly texts: Phaser.GameObjects.Text[];
   private readonly cursor: Phaser.GameObjects.Text;
   private index: number;
+  private finish?: (value: number | null) => void;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -50,14 +51,21 @@ export class Menu {
     return this.index;
   }
 
+  /** Fecha o menu de fora (ex.: uma tecla de atalho), fazendo {@link choose} devolver `value`. */
+  close(value: number | null): void {
+    this.finish?.(value);
+  }
+
   choose(): Promise<number | null> {
     return new Promise((resolve) => {
       const finish = (value: number | null) => {
+        this.finish = undefined;
         off();
         audio.sfx(value === null ? 'cancel' : 'confirm');
         for (const t of this.texts) t.removeAllListeners().disableInteractive();
         resolve(value);
       };
+      this.finish = finish;
       const pick = (i: number) => {
         if (!this.options[i].disabled) finish(i);
       };

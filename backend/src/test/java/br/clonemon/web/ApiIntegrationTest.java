@@ -342,6 +342,41 @@ class ApiIntegrationTest {
         assertThat(post("/api/battles", token, "{\"npcId\":\"bia\"}")).hasStatus(HttpStatus.CONFLICT);
     }
 
+    @Test
+    void finishedBattlesCanBeReplayedByTheirOwnerOnly() {
+        String token = trainerWithStarter(1);
+        String intruder = trainerWithStarter(2);
+        assertThat(get("/api/replays", token)).hasStatusOk().bodyJson().extractingPath("$").asArray().isEmpty();
+
+        MvcTestResult started = post("/api/battles", token, "");
+        Integer battleId = read(started, "$.id");
+        assertThat(get("/api/replays/" + battleId, token)).as("em andamento").hasStatus(HttpStatus.NOT_FOUND);
+
+        MvcTestResult turn = null;
+        String status = "AWAITING_ACTION";
+        int turns = 0;
+        for (int i = 0; i < 60 && status.equals("AWAITING_ACTION"); i++) {
+            turn = post("/api/battles/" + battleId + "/turns", token, nextAction(turn == null ? started : turn, turn == null ? "$" : "$.battle"));
+            status = read(turn, "$.battle.status");
+            turns++;
+        }
+
+        MvcTestResult list = get("/api/replays", token);
+        assertThat(list).hasStatusOk();
+        assertThat(list).bodyJson().extractingPath("$[0].id").isEqualTo(battleId);
+        assertThat(list).bodyJson().extractingPath("$[0].lead").isEqualTo("Lindoya");
+        assertThat(list).bodyJson().extractingPath("$[0].result").isEqualTo(status);
+        assertThat(list).bodyJson().extractingPath("$[0].turnCount").isEqualTo(turns);
+
+        MvcTestResult replay = get("/api/replays/" + battleId, token);
+        assertThat(replay).hasStatusOk();
+        assertThat(replay).bodyJson().extractingPath("$.snapshot.playerTeam[0].name").isEqualTo("Lindoya");
+        List<Object> recorded = read(replay, "$.turns");
+        assertThat(recorded).hasSize(turns);
+        assertThat(replay).bodyJson().extractingPath("$.turns[0].events[0].enemyActive").isEqualTo(0);
+        assertThat(get("/api/replays/" + battleId, intruder)).hasStatus(HttpStatus.NOT_FOUND);
+    }
+
     /** Usa o primeiro golpe com PP do monstro ativo; foge se nao houver nenhum. */
     private static String nextAction(MvcTestResult r, String battlePath) {
         Integer active = read(r, battlePath + ".playerActive");

@@ -1,4 +1,5 @@
-import type { Move, Stat, StatusCondition } from '../api/types';
+import type { Element, Move, Stat, StatusCondition } from '../api/types';
+import { effectiveness } from './elements';
 
 /** Selo de 3 letras mostrado na caixa de informacoes; vazio sem status. */
 export const STATUS_BADGE: Record<StatusCondition, string> = {
@@ -35,8 +36,27 @@ export function moveRow(move: Move): string {
   return `${move.name.toUpperCase().padEnd(19)} ${String(move.ppLeft ?? 0).padStart(2)}/${String(move.maxPp).padStart(2)}`;
 }
 
-/** Detalhes do golpe selecionado (cabe em 26 colunas, ao lado do icone do tipo). */
-export function moveInfo(move: Move): string {
+/** Colunas da linha de detalhes, ao lado do icone do tipo. */
+export const INFO_COLUMNS = 26;
+
+export type Matchup = 'super' | 'weak' | 'neutral';
+
+const MATCHUP_TAG: Record<Matchup, string> = { super: 'SUPER!', weak: 'FRACO', neutral: '' };
+
+/** Golpe de dano contra o elemento do oponente atual; golpe de status e sempre neutro. */
+export function matchup(move: Move, defender: Element): Matchup {
+  if (move.power <= 0) return 'neutral';
+  const eff = effectiveness(move.element, defender);
+  return eff > 1 ? 'super' : eff < 1 ? 'weak' : 'neutral';
+}
+
+/**
+ * Detalhes do golpe selecionado. Com o elemento do oponente, acrescenta "SUPER!" ou "FRACO"
+ * se couber nas {@link INFO_COLUMNS} colunas (a seta na linha do golpe mostra sempre).
+ */
+export function moveInfo(move: Move, defender?: Element): string {
   const power = move.power > 0 ? String(move.power) : '--';
-  return [`POD ${power}`, `PRE ${move.accuracy}`, effectLabel(move)].filter(Boolean).join(' ');
+  const info = [`POD ${power}`, `PRE ${move.accuracy}`, effectLabel(move)].filter(Boolean).join(' ');
+  const tag = defender ? MATCHUP_TAG[matchup(move, defender)] : '';
+  return tag && info.length + 1 + tag.length <= INFO_COLUMNS ? `${info} ${tag}` : info;
 }

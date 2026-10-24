@@ -51,7 +51,8 @@ sem precisar interpretar o texto.
 | `SLEEP` | DOR | Não age por 1 a 3 turnos (sorteado ao dormir). |
 
 - Estágios de ATK, DEF e SPD vão de -6 a +6 (multiplicadores clássicos: +1 = 1,5x, -1 = 0,67x…) e zeram quando o monstro sai de campo.
-- Todo sorteio (precisão, crítico, efeitos, sono, descongelar, paralisia) usa o `RandomGenerator` injetado, então os testes são determinísticos.
+- Todo golpe causa de 85% a 100% do dano calculado (rolagem sorteada depois do crítico), e empate de velocidade é decidido no cara ou coroa.
+- Todo sorteio (precisão, crítico, rolagem de dano, empate de velocidade, efeitos, sono, descongelar, paralisia) usa o `RandomGenerator` injetado, então os testes são determinísticos.
 
 ## API
 
@@ -77,11 +78,15 @@ Erros: 400 (entrada inválida), 401 (sem token ou credenciais erradas), 404, 409
 
 | Id | Nome | Time (espécie, nível) |
 |---|---|---|
-| `caio` | CAIO | Pimentinha 2, Gatonet 2 |
-| `bia` | BIA | Boto 6, Abacaxi 7 |
-| `zeca` | ZECA | PaoDeAcucar 8, Pinguim 9, Lucifer 10 |
+| `caio` | CAIO | Boto 1, Pimentinha 1 |
+| `bia` | BIA | Pinguim 5, Abacaxi 7 |
+| `zeca` | ZECA | PaoDeAcucar 7, Pinguim 9, Lucifer 10 |
 
 - Cada treinador só pode ser derrotado uma vez; o time dele começa sempre novo, com HP e PP cheios.
+- O time tem no máximo 2 monstros do mesmo elemento e nenhuma espécie repetida (`NpcTrainer` recusa o contrário).
+- O `BalanceTest` simula 200 batalhas de cada inicial contra cada treinador, com um jogador-robô que escolhe golpes ao acaso:
+  CAIO enfrenta o inicial no nível 5 sozinho (mínimo 50% de vitórias); BIA, o inicial no 9 com 1 recruta; ZECA, o inicial no 12
+  com 2 recrutas (mínimo 30%). Mudou conteúdo ou regra de batalha, o teste mostra a tabela e falha se alguém ficar abaixo do piso.
 - A IA dos treinadores é a gulosa (`AiStrategy.greedy()`); os selvagens continuam escolhendo ao acaso.
 - `RUN` é recusado com 400. Quando o treinador manda o próximo monstro, o evento é `"<NOME> enviou <Especie>!"`.
 - Vencer registra a vitória e termina com o evento `"Voce derrotou <NOME>!"`, sem recrutar ninguém; o XP funciona como contra selvagens. Perder não registra nada.

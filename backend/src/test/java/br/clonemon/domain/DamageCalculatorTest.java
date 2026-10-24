@@ -8,11 +8,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DamageCalculatorTest {
 
-    /** Retorna sempre o mesmo valor: 99 => acerto em accuracy 100 e sem critico. */
+    /** Retorna sempre o mesmo valor (limitado ao teto do sorteio): 99 => acerto em accuracy 100, sem critico e rolagem maxima. */
     private static RandomGenerator fixed(int value) {
         return new RandomGenerator() {
             @Override public long nextLong() { return value; }
-            @Override public int nextInt(int bound) { return value; }
+            @Override public int nextInt(int bound) { return Math.min(value, bound - 1); }
         };
     }
 
@@ -105,5 +105,22 @@ class DamageCalculatorTest {
         Monster tank = new Monster(Catalog.COISO, 50);
         var r = new DamageCalculator(fixed(50)).calculate(weak, tank, new Move("t", Element.FOGO, 1, 100, 1));
         assertThat(r.damage()).isGreaterThanOrEqualTo(1);
+    }
+
+    /** Devolve os sorteios na ordem dada: precisao, critico e rolagem de dano. */
+    private static RandomGenerator scripted(int... values) {
+        int[] next = {0};
+        return new RandomGenerator() {
+            @Override public long nextLong() { return 0; }
+            @Override public int nextInt(int bound) { return values[next[0]++]; }
+        };
+    }
+
+    @Test
+    void damageRollVariesFrom85To100Percent() {
+        Move cuspe = Catalog.LINDOYA.moves().get(0);
+        int high = new DamageCalculator(scripted(0, 99, 15)).calculate(lindoya, olaf, cuspe).damage();
+        int low = new DamageCalculator(scripted(0, 99, 0)).calculate(lindoya, olaf, cuspe).damage();
+        assertThat(low).isLessThan(high).isBetween((int) (high * 0.85) - 1, (int) (high * 0.85) + 1);
     }
 }

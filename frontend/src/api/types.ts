@@ -129,6 +129,8 @@ export interface TurnEvent {
   enemyHp: number;
   playerStatus: StatusCondition;
   enemyStatus: StatusCondition;
+  /** Monstro do oponente em campo depois do evento (sempre presente nas respostas do servidor). */
+  enemyActive?: number;
 }
 
 export interface TurnResponse {
@@ -159,4 +161,45 @@ export interface TokenResponse {
   token: string;
   username: string;
   expiresAt: string;
+}
+
+/** Monstro como estava no inicio da batalha gravada. */
+export interface ReplayMonster {
+  speciesId: number;
+  name: string;
+  element: Element;
+  level: number;
+  currentHp: number;
+  maxHp: number;
+  status: StatusCondition;
+}
+
+export interface ReplaySnapshot {
+  playerTeam: ReplayMonster[];
+  enemyTeam: ReplayMonster[];
+  playerActive: number;
+  enemyActive: number;
+  npcName: string | null;
+}
+
+/** Um turno: eventos e nivel/HP maximo do time do jogador depois dele. */
+export interface ReplayTurn {
+  events: TurnEvent[];
+  playerTeam: { level: number; maxHp: number }[];
+}
+
+export type ReplayResult = 'PLAYER_WON' | 'PLAYER_LOST' | 'FLED';
+
+export interface ReplaySummary {
+  id: number;
+  finishedAt: string;
+  opponent: string;
+  lead: string;
+  result: ReplayResult;
+  turnCount: number;
+}
+
+export interface Replay extends ReplaySummary {
+  snapshot: ReplaySnapshot;
+  turns: ReplayTurn[];
 }

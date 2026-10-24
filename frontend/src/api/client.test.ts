@@ -55,6 +55,16 @@ describe('ApiClient', () => {
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
+  it('lists replays and loads one by id', async () => {
+    const { client, fetchFn } = setup('t', json(200, []));
+    await client.replays();
+    expect(fetchFn.mock.calls[0][0]).toBe('/api/replays');
+    fetchFn.mockResolvedValueOnce(json(200, { id: 7 }));
+    await client.replay(7);
+    expect(fetchFn.mock.calls[1][0]).toBe('/api/replays/7');
+    expect(fetchFn.mock.calls[1][1]?.method).toBe('GET');
+  });
+
   it('returns null when there is no active battle', async () => {
     const { client } = setup('t', json(404, { detail: 'No active battle' }));
     await expect(client.activeBattle()).resolves.toBeNull();

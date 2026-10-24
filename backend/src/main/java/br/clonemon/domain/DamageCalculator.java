@@ -7,6 +7,8 @@ public class DamageCalculator {
     public static final double STAB = 1.5;
     public static final double CRIT = 1.5;
     public static final int CRIT_CHANCE_PERCENT = 6;
+    /** Todo golpe causa de 85% a 100% do dano calculado, como nos jogos originais. */
+    public static final int MIN_ROLL_PERCENT = 85;
 
     public record Result(int damage, boolean hit, boolean critical, double effectiveness) {}
 
@@ -20,10 +22,12 @@ public class DamageCalculator {
         // Golpe de status: so a precisao importa.
         if (!move.isDamaging()) return new Result(0, true, false, Element.NEUTRAL);
         boolean crit = rng.nextInt(100) < CRIT_CHANCE_PERCENT;
+        int rollPercent = between(MIN_ROLL_PERCENT, 100);
         double base = ((2.0 * attacker.level() / 5 + 2) * move.power() * attacker.effectiveAttack() / defender.effectiveDefense()) / 50 + 2;
         double mod = eff
                 * (move.element() == attacker.species().element() ? STAB : 1.0)
-                * (crit ? CRIT : 1.0);
+                * (crit ? CRIT : 1.0)
+                * rollPercent / 100.0;
         int dmg = Math.max(1, (int) (base * mod));
         return new Result(dmg, true, crit, eff);
     }

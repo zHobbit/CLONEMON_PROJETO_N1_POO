@@ -35,4 +35,6 @@ export const SCENES = {
   world: 'World',
   team: 'Team',
   battle: 'Battle',
+  replays: 'Replays',
+  replay: 'Replay',
 } as const;

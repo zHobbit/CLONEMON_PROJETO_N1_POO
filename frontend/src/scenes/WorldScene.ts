@@ -406,13 +406,13 @@ export class WorldScene extends Phaser.Scene {
     this.setIdle();
   }
 
-  /** Menu de pausa: TIME e SAIR (a cura agora e no Centro). */
+  /** Menu de pausa: TIME, REPLAYS e SAIR (a cura e no Centro). */
   private async pause(): Promise<void> {
     this.busy = true;
     this.standStill(this.player);
     const { value: menu, objects } = this.pinned(() => {
-      addFrame(this, 166, 0, 74, 40);
-      return new Menu(this, [{ label: 'TIME' }, { label: 'SAIR' }], { x: 172, y: 8, cancellable: true });
+      addFrame(this, 156, 0, 84, 46);
+      return new Menu(this, [{ label: 'TIME' }, { label: 'REPLAYS' }, { label: 'SAIR' }], { x: 162, y: 8, cancellable: true });
     });
     const choice = await menu.choose();
     menu.destroy();
@@ -421,6 +421,9 @@ export class WorldScene extends Phaser.Scene {
       void this.flushPosition();
       fadeTo(this, SCENES.team, { roster: this.roster });
     } else if (choice === 1) {
+      void this.flushPosition();
+      fadeTo(this, SCENES.replays);
+    } else if (choice === 2) {
       await this.flushPosition();
       api.logout();
       session = null;

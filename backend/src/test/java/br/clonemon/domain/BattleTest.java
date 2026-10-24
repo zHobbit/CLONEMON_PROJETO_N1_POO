@@ -150,4 +150,14 @@ class BattleTest {
         assertThat(firstHit(new DamageCalculator(lowRolls))).as("sorteio baixo: jogador primeiro").isEqualTo(Battle.Effect.ENEMY_HIT);
         assertThat(firstHit(calc)).as("sorteio alto: oponente primeiro").isEqualTo(Battle.Effect.PLAYER_HIT);
     }
+
+    @Test
+    void eventsTellWhichEnemyIsInPlay() {
+        Battle b = new Battle(List.of(new Monster(Catalog.LINDOYA, 50)),
+                List.of(new Monster(Catalog.COISO, 2), new Monster(Catalog.OLAF, 2)), "CAIO", calc, AiStrategy.greedy());
+        List<Battle.Event> events = b.submit(new Battle.UseMove(1));
+        assertThat(events.getFirst().enemyActive()).isZero();
+        assertThat(events).filteredOn(e -> e.effect() == Battle.Effect.ENEMY_SWITCH)
+                .singleElement().extracting(Battle.Event::enemyActive).isEqualTo(1);
+    }
 }

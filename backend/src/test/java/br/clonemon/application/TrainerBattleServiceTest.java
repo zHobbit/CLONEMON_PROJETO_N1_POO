@@ -33,7 +33,7 @@ class TrainerBattleServiceTest {
     private final InMemoryPorts.Battles battles = new InMemoryPorts.Battles();
     private final InMemoryPorts.World world = new InMemoryPorts.World();
     private final BattleService service = new BattleService(battles, monsters, new InMemoryPorts.FixtureCatalog(),
-            new InMemoryPorts.Npcs(), world, new DamageCalculator(STEADY), WILD_ONLY, new InMemoryPorts.ScriptedRandom());
+            new InMemoryPorts.Npcs(), world, new InMemoryPorts.Replays(), new DamageCalculator(STEADY), WILD_ONLY, new InMemoryPorts.ScriptedRandom());
 
     /** Joga o mesmo golpe ate a batalha acabar; devolve os eventos de todos os turnos. */
     private List<Battle.Event> playUntilFinished(long battleId, int moveIndex) {
@@ -129,7 +129,7 @@ class TrainerBattleServiceTest {
     void cannotChallengeDuringAnotherBattle() {
         monsters.add(TRAINER, Catalog.GROOT, 5, 0);
         BattleSession wild = new BattleService(battles, monsters, new InMemoryPorts.FixtureCatalog(), new InMemoryPorts.Npcs(),
-                world, new DamageCalculator(STEADY), AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom()).start(TRAINER);
+                world, new InMemoryPorts.Replays(), new DamageCalculator(STEADY), AiStrategy.greedy(), new InMemoryPorts.ScriptedRandom()).start(TRAINER);
 
         assertThat(wild.npcId()).isNull();
         assertThat(wild.battle().opponentName()).isNull();

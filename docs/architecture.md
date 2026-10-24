@@ -71,6 +71,8 @@ sem precisar interpretar o texto.
 | GET | `/api/battles/active` | Batalha em andamento (404 se não houver) |
 | GET | `/api/battles/{id}` | Estado de uma batalha |
 | POST | `/api/battles/{id}/turns` | `{ "action": "MOVE", "moveIndex": 0 }`, `{ "action": "SWITCH", "teamIndex": 1 }` ou `{ "action": "RUN" }` |
+| GET | `/api/replays` | Até 20 batalhas terminadas do treinador, da mais nova: `{ id, finishedAt, opponent, lead, result, turnCount }` |
+| GET | `/api/replays/{id}` | Replay completo: os campos acima mais `snapshot` (times no início) e `turns` (`{ events, playerTeam: [{ level, maxHp }] }`); 404 se não for seu ou ainda estiver em andamento |
 
 Erros: 400 (entrada inválida), 401 (sem token ou credenciais erradas), 404, 409 (conflito de estado: batalha já em andamento, time desmaiado, turno concorrente, NPC já derrotado).
 

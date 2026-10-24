@@ -3,6 +3,7 @@ package br.clonemon.application;
 import br.clonemon.application.port.BattleRepository;
 import br.clonemon.application.port.MonsterRepository;
 import br.clonemon.application.port.NpcCatalog;
+import br.clonemon.application.port.ReplayRepository;
 import br.clonemon.application.port.SpeciesCatalog;
 import br.clonemon.application.port.TrainerRepository;
 import br.clonemon.application.port.WorldRepository;
@@ -14,7 +15,11 @@ import br.clonemon.domain.Species;
 import br.clonemon.domain.Trainer;
 import br.clonemon.domain.WorldPosition;
 
+import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -144,6 +149,66 @@ final class InMemoryPorts {
             return new Battle.State(s.playerTeam().stream().map(InMemoryPorts::copyInBattle).toList(),
                     s.enemyTeam().stream().map(InMemoryPorts::copyInBattle).toList(),
                     s.playerActive(), s.enemyActive(), s.status(), s.log());
+        }
+    }
+
+    static final class Replays implements ReplayRepository {
+        static final class Entry {
+            final long battleId;
+            final long trainerId;
+            final String opponent;
+            final Snapshot snapshot;
+            final List<Turn> turns = new ArrayList<>();
+            Battle.Status result;
+            Instant finishedAt;
+
+            Entry(long battleId, long trainerId, String opponent, Snapshot snapshot) {
+                this.battleId = battleId;
+                this.trainerId = trainerId;
+                this.opponent = opponent;
+                this.snapshot = snapshot;
+            }
+
+            Summary summary() {
+                return new Summary(battleId, finishedAt, opponent, snapshot.lead(), result, turns.size());
+            }
+        }
+
+        final Map<Long, Entry> entries = new LinkedHashMap<>();
+        private Instant clock = Instant.parse("2026-01-01T12:00:00Z");
+
+        @Override public void start(long battleId, long trainerId, String opponent, Snapshot snapshot) {
+            entries.put(battleId, new Entry(battleId, trainerId, opponent, snapshot));
+        }
+
+        @Override public void appendTurn(long battleId, Turn turn) { entries.get(battleId).turns.add(turn); }
+
+        @Override public void finish(long battleId, Battle.Status result) {
+            Entry e = entries.get(battleId);
+            e.result = result;
+            clock = clock.plusSeconds(1);
+            e.finishedAt = clock;
+        }
+
+        @Override public void prune(long trainerId, int keep) {
+            finished(trainerId).stream().skip(keep).forEach(e -> entries.remove(e.battleId));
+        }
+
+        @Override public List<Summary> listFinished(long trainerId, int limit) {
+            return finished(trainerId).stream().limit(limit).map(Entry::summary).toList();
+        }
+
+        @Override public Optional<Replay> findFinished(long trainerId, long battleId) {
+            return Optional.ofNullable(entries.get(battleId))
+                    .filter(e -> e.trainerId == trainerId && e.finishedAt != null)
+                    .map(e -> new Replay(e.summary(), e.snapshot, List.copyOf(e.turns)));
+        }
+
+        private List<Entry> finished(long trainerId) {
+            return entries.values().stream()
+                    .filter(e -> e.trainerId == trainerId && e.finishedAt != null)
+                    .sorted(Comparator.comparing((Entry e) -> e.finishedAt).reversed())
+                    .toList();
         }
     }
 

@@ -183,10 +183,10 @@ test('signs, the pause menu and healing at the Centro', async ({ page, request }
   await shot(page, 'world-sign');
   await pressUntilIdle(page);
 
-  // Esc abre o menu de pausa (TIME e SAIR); Esc de novo fecha.
+  // Esc abre o menu de pausa (TIME, REPLAYS e SAIR); Esc de novo fecha.
   await page.keyboard.press('Escape');
   await waitForText(page, 'World', 'SAIR');
-  expect(await sceneTexts(page, 'World')).toEqual(expect.arrayContaining(['TIME', 'SAIR']));
+  expect(await sceneTexts(page, 'World')).toEqual(expect.arrayContaining(['TIME', 'REPLAYS', 'SAIR']));
   await shot(page, 'world-pause');
   await page.keyboard.press('Escape');
   await waitForIdle(page);

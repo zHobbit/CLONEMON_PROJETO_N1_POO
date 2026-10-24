@@ -5,6 +5,8 @@ import { installAudio } from './audio/install';
 import { COLORS, FONT_FAMILY, HEIGHT, SCENES, WIDTH } from './config';
 import { installTransitions } from './fx/transitions';
 import { BattleScene } from './scenes/BattleScene';
+import { ReplayListScene } from './scenes/ReplayListScene';
+import { ReplayScene } from './scenes/ReplayScene';
 import { BootScene } from './scenes/BootScene';
 import { LoginScene } from './scenes/LoginScene';
 import { StarterScene } from './scenes/StarterScene';
@@ -35,7 +37,7 @@ async function start(): Promise<void> {
     pixelArt: true,
     backgroundColor: COLORS.page,
     scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
-    scene: [BootScene, TitleScene, LoginScene, StarterScene, WorldScene, TeamScene, BattleScene],
+    scene: [BootScene, TitleScene, LoginScene, StarterScene, WorldScene, TeamScene, BattleScene, ReplayListScene, ReplayScene],
     // Musica e efeitos vem do motor proprio (src/audio); o som do Phaser criaria outro AudioContext a toa.
     audio: { noAudio: true },
   });

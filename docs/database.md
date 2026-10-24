@@ -14,6 +14,7 @@ PostgreSQL, com o schema versionado pelo Flyway em
   os treinadores do mapa (`npc_trainer`, `npc_team`) com a seed de CAIO, BIA e ZECA, as vitórias sobre eles (`trainer_npc_defeat`)
   e `battle.npc_id` (nulo = batalha contra selvagem).
 - `V7__rebalance_npcs.sql`: novos times de CAIO, BIA e ZECA, medidos pelo `BalanceTest`.
+- `V8__battle_replay.sql`: replays (`battle_replay`): retrato inicial dos times e eventos por turno; ficam os 20 terminados mais novos de cada treinador.
 
 O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com o schema, nunca o altera.
 
@@ -32,6 +33,8 @@ erDiagram
     TRAINER ||--o{ TRAINER_NPC_DEFEAT : venceu
     NPC_TRAINER ||--o{ TRAINER_NPC_DEFEAT : "foi vencido"
     NPC_TRAINER |o--o{ BATTLE : desafiado
+    BATTLE ||--o| BATTLE_REPLAY : "vira replay"
+    TRAINER ||--o{ BATTLE_REPLAY : assiste
 
     TRAINER {
         bigint id PK
@@ -91,6 +94,18 @@ erDiagram
         int version "bloqueio otimista"
         timestamptz created_at
         varchar npc_id FK "nulo = selvagem"
+    }
+    BATTLE_REPLAY {
+        bigint battle_id PK, FK
+        bigint trainer_id FK
+        varchar opponent "CAIO ou Coiso selvagem"
+        varchar lead "monstro que comecou"
+        int turn_count
+        varchar result "nulo ate terminar"
+        timestamptz started_at
+        timestamptz finished_at
+        jsonb snapshot "times no inicio"
+        jsonb turns "eventos e niveis por turno"
     }
     NPC_TRAINER {
         varchar id PK "caio bia zeca"

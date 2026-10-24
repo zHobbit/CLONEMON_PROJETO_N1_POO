@@ -11,6 +11,11 @@ describe('mapKey', () => {
     expect(mapKey('ArrowLeft')).toBe('left');
   });
 
+  it('maps H to the battle history', () => {
+    expect(mapKey('h')).toBe('history');
+    expect(mapKey('H')).toBe('history');
+  });
+
   it('ignores other keys', () => {
     expect(mapKey('a')).toBeUndefined();
     expect(mapKey('Tab')).toBeUndefined();

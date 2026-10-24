@@ -26,9 +26,9 @@ public class Battle {
         MOVE_LEARNED
     }
 
-    /** Um passo do turno, com o estado visivel logo apos ele (monstro ativo, HP e status de cada lado). */
+    /** Um passo do turno, com o estado visivel logo apos ele (monstros ativos, HP e status de cada lado). */
     public record Event(String text, Effect effect, int playerActive, int playerHp, int enemyHp,
-                        StatusCondition playerStatus, StatusCondition enemyStatus) {}
+                        StatusCondition playerStatus, StatusCondition enemyStatus, int enemyActive) {}
 
     /** Estado completo para persistencia. Status e estagios ficam dentro de cada monstro. */
     public record State(List<Monster> playerTeam, List<Monster> enemyTeam, int playerActive, int enemyActive,
@@ -157,7 +157,7 @@ public class Battle {
 
     private Event event(String text, Effect effect) {
         return new Event(text, effect, playerActive, playerMonster().currentHp(), enemyMonster().currentHp(),
-                playerMonster().status(), enemyMonster().status());
+                playerMonster().status(), enemyMonster().status(), enemyActive);
     }
 
     /** Efeito do lado do monstro dado: o do jogador ou o do oponente. */

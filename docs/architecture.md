@@ -94,7 +94,7 @@ Vite + TypeScript + Phaser 4, em 240x160 (resolução do GBA) com escala inteira
 | Pasta | Conteúdo |
 |---|---|
 | `src/api` | Tipos da API e `ApiClient` (token no localStorage; 401 leva ao login) |
-| `src/battle` | `planTurn`: transforma eventos de turno em passos de animação (lógica pura, testada) |
+| `src/battle` | `planTurn` (eventos de turno viram passos de animação), efetividade dos elementos, linhas do histórico por turno e o ritmo que acelera batalhas longas (lógica pura, testada) |
 | `src/scenes` | Boot, Título, Login (formulário HTML), Inicial, Mapa (tela principal), Time, Batalha |
 | `src/world` | O mapa em texto, colisão, visão dos treinadores, encontros e salvamento da posição (lógica pura, testada) |
 | `src/ui` | Caixa de texto, menus, barra de HP, teclado |

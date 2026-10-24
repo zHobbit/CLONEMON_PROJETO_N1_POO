@@ -69,11 +69,11 @@ public final class Catalog {
 
     // Treinadores do mapa (V6).
     public static final NpcTrainer CAIO = new NpcTrainer("caio", "CAIO",
-            List.of(new NpcTrainer.Member(PIMENTINHA, 2), new NpcTrainer.Member(GATONET, 2)));
+            List.of(new NpcTrainer.Member(BOTO, 1), new NpcTrainer.Member(PIMENTINHA, 1)));
     public static final NpcTrainer BIA = new NpcTrainer("bia", "BIA",
-            List.of(new NpcTrainer.Member(BOTO, 6), new NpcTrainer.Member(ABACAXI, 7)));
+            List.of(new NpcTrainer.Member(PINGUIM, 5), new NpcTrainer.Member(ABACAXI, 7)));
     public static final NpcTrainer ZECA = new NpcTrainer("zeca", "ZECA",
-            List.of(new NpcTrainer.Member(PAO_DE_ACUCAR, 8), new NpcTrainer.Member(PINGUIM, 9), new NpcTrainer.Member(LUCIFER, 10)));
+            List.of(new NpcTrainer.Member(PAO_DE_ACUCAR, 7), new NpcTrainer.Member(PINGUIM, 9), new NpcTrainer.Member(LUCIFER, 10)));
 
     public static final List<NpcTrainer> NPCS = List.of(CAIO, BIA, ZECA);
 }

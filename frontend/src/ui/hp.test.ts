@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HP_GREEN, HP_RED, HP_YELLOW, formatHp, hpColor, hpFillWidth } from './hp';
+import { HP_GREEN, HP_RED, HP_YELLOW, formatHp, hpColor, hpFillWidth, hpChangeLabel } from './hp';
 
 describe('hpColor', () => {
   it('is green above half, yellow above a fifth, red below', () => {
@@ -40,5 +40,20 @@ describe('formatHp', () => {
   it('rounds tween values and clamps negatives', () => {
     expect(formatHp(6.6, 23)).toBe('  7/ 23');
     expect(formatHp(-1, 23)).toBe('  0/ 23');
+  });
+});
+
+describe('hpChangeLabel', () => {
+  it('shows damage and healing as a percentage of max HP', () => {
+    expect(hpChangeLabel(40, 30, 40)).toBe('-25%');
+    expect(hpChangeLabel(30, 34, 40)).toBe('+10%');
+  });
+
+  it('never rounds a real change down to 0%', () => {
+    expect(hpChangeLabel(200, 199, 200)).toBe('-1%');
+  });
+
+  it('is empty without change', () => {
+    expect(hpChangeLabel(20, 20, 40)).toBe('');
   });
 });

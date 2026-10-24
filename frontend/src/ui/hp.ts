@@ -20,3 +20,10 @@ export function hpFillWidth(hp: number, max: number, width: number): number {
 export function formatHp(hp: number, max: number): string {
   return `${String(Math.max(0, Math.round(hp))).padStart(3)}/${String(max).padStart(3)}`;
 }
+
+/** Dano ou cura em % do HP maximo ("-25%", "+10%"); vazio sem mudanca. Mudanca real nunca vira 0%. */
+export function hpChangeLabel(from: number, to: number, max: number): string {
+  if (from === to || max <= 0) return '';
+  const percent = Math.max(1, Math.round((Math.abs(to - from) * 100) / max));
+  return `${to < from ? '-' : '+'}${percent}%`;
+}

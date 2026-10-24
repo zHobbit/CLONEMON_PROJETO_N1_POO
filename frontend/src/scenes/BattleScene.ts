@@ -4,13 +4,17 @@ import type { Battle, Combatant, StatusCondition, TurnAction, TurnResponse } fro
 import { C, PALETTE } from '../art/palette';
 import { BATTLE_BG } from '../art/scenery';
 import { BG, addMonster, elementKey, showMonster } from '../art/textures';
-import { STATUS_BADGE, moveInfo, moveRow } from '../battle/labels';
+import type { HistoryEntry } from '../battle/history';
+import { STATUS_BADGE, matchup, moveInfo, moveRow } from '../battle/labels';
+import { Pace } from '../battle/pace';
 import { planTurn, type Side, type Step, type ViewState, viewOf } from '../battle/playback';
 import { COLORS, CSS, SCENES, WIDTH } from '../config';
 import { BattleFx } from '../fx/BattleFx';
 import { api } from '../services';
-import { formatHp } from '../ui/hp';
+import { showHistory } from '../ui/HistoryPanel';
+import { formatHp, hpChangeLabel } from '../ui/hp';
 import { HpBar } from '../ui/HpBar';
+import { onKey } from '../ui/input';
 import { Menu } from '../ui/Menu';
 import { TextBox } from '../ui/TextBox';
 import { addFrame, addText, tween } from '../ui/widgets';
@@ -23,6 +27,8 @@ interface BattleData {
 const ENEMY_POS = { x: BATTLE_BG.enemy.x, y: BATTLE_BG.enemy.y - 20 };
 const PLAYER_POS = { x: BATTLE_BG.player.x, y: BATTLE_BG.player.y - 20 };
 const LUNGE = 8;
+/** Valor que o menu de acoes devolve quando o jogador aperta H. */
+const OPEN_HISTORY = -1;
 
 /** Cor do selo de status e da letra sobre ele. */
 const BADGE_STYLE: Record<Exclude<StatusCondition, 'NONE'>, { fill: number; ink: string }> = {
@@ -65,6 +71,14 @@ class InfoBox {
 
   setHp(hp: number, animate: boolean): Promise<void> {
     return this.bar.set(hp, this.max, animate);
+  }
+
+  get hp(): number {
+    return this.bar.value;
+  }
+
+  get maxHp(): number {
+    return this.max;
   }
 
   /** Selo de 3 letras no canto de baixo ("QUE", "PAR"...); some sem status. */
@@ -114,6 +128,10 @@ export class BattleScene extends Phaser.Scene {
   private textBox!: TextBox;
   private actionCursor = 0;
   private readonly fx = new BattleFx(this);
+  /** Tudo o que foi dito na batalha, por turno, para o painel de historico (tecla H). */
+  private history: HistoryEntry[] = [];
+  private turn = 0;
+  private pace = new Pace();
 
   constructor() {
     super(SCENES.battle);
@@ -134,7 +152,23 @@ export class BattleScene extends Phaser.Scene {
     this.balls = this.add.graphics();
     drawTeamBalls(this.balls, this.battle);
     this.pending = null;
+    this.turn = 0;
+    this.history = this.battle.log.map((text) => ({ turn: 0, text }));
+    this.pace = new Pace();
+    this.setSpeed(1);
     void this.run();
+  }
+
+  /** Acelera (ou volta ao normal) texto e animacoes da cena. */
+  private setSpeed(factor: number): void {
+    this.tweens.timeScale = factor;
+    this.time.timeScale = factor;
+  }
+
+  /** Mostra uma fala fora dos turnos (apresentacao) e guarda no historico. */
+  private async narrate(text: string): Promise<void> {
+    this.history.push({ turn: this.turn, text });
+    await this.textBox.sayAndWait(text);
   }
 
   /** Batalha contra um treinador: nao da para fugir e ele tem um time. */
@@ -148,7 +182,7 @@ export class BattleScene extends Phaser.Scene {
 
   private async run(): Promise<void> {
     if (this.battle.log.length === 0) await this.intro();
-    else await this.textBox.sayAndWait('A batalha continua!');
+    else await this.narrate('A batalha continua!');
 
     while (this.battle.status === 'AWAITING_ACTION') {
       const action = await this.chooseAction();
@@ -166,8 +200,12 @@ export class BattleScene extends Phaser.Scene {
       }
       this.fx.beginTurn(this.battle, res);
       this.pending = res.battle;
+      this.turn++;
+      for (const e of res.events) this.history.push({ turn: this.turn, text: e.text });
       for (const step of planTurn(this.view, res.events)) await this.play(step);
       this.sync(res.battle);
+      this.pace.afterTurn(res.events);
+      this.setSpeed(this.pace.factor);
     }
 
     // De volta ao mapa, que precisa saber como acabou (derrota leva ao Centro; vitoria marca o treinador).
@@ -182,12 +220,12 @@ export class BattleScene extends Phaser.Scene {
     this.enemySprite.setX(WIDTH + 40);
     const enemy = this.battle.enemy.name.toUpperCase();
     const trainer = this.trainer;
-    if (trainer) await this.textBox.sayAndWait(`${trainer} quer batalhar!`);
+    if (trainer) await this.narrate(`${trainer} quer batalhar!`);
     await tween(this, { targets: this.enemySprite, x: ENEMY_POS.x, duration: 500, ease: 'Quad.Out' });
-    await this.textBox.sayAndWait(trainer ? `${trainer} enviou ${enemy}!` : `Um ${enemy} selvagem apareceu!`);
+    await this.narrate(trainer ? `${trainer} enviou ${enemy}!` : `Um ${enemy} selvagem apareceu!`);
     this.playerSprite.setX(-40).setAlpha(1);
     await tween(this, { targets: this.playerSprite, x: PLAYER_POS.x, duration: 400, ease: 'Quad.Out' });
-    await this.textBox.sayAndWait(`Vai, ${this.active().name.toUpperCase()}!`);
+    await this.narrate(`Vai, ${this.active().name.toUpperCase()}!`);
   }
 
   private async chooseAction(): Promise<TurnAction | null> {
@@ -202,11 +240,21 @@ export class BattleScene extends Phaser.Scene {
       rowHeight: 14,
       initial: this.actionCursor,
     });
+    // H abre o historico; o menu volta depois, com o cursor onde estava.
+    const offHistory = onKey(this, (k) => {
+      if (k === 'history') menu.close(OPEN_HISTORY);
+    });
     const choice = await menu.choose();
+    offHistory();
     menu.destroy();
     frame.destroy();
     this.textBox.setWrapWidth(null);
     this.textBox.setText('');
+    if (choice === OPEN_HISTORY) {
+      this.actionCursor = menu.selected;
+      await showHistory(this, this.history);
+      return null;
+    }
     this.actionCursor = choice ?? 0;
 
     if (choice === 0) return this.chooseMove();
@@ -221,6 +269,8 @@ export class BattleScene extends Phaser.Scene {
     const panel = addFrame(this, 0, 106, WIDTH, 54);
     const type = this.add.image(12, 145, elementKey(moves[0]?.element ?? 'AGUA')).setOrigin(0);
     const info = addText(this, 26, 147, '');
+    const defender = this.battle.enemy.element;
+    const arrows = this.drawMatchupArrows(moves.map((m) => matchup(m, defender)));
     const menu = new Menu(
       this,
       moves.map((m) => ({ label: moveRow(m), disabled: (m.ppLeft ?? 0) === 0 })),
@@ -231,7 +281,7 @@ export class BattleScene extends Phaser.Scene {
         cancellable: true,
         onHover: (i) => {
           type.setTexture(elementKey(moves[i].element));
-          info.setText(moveInfo(moves[i]));
+          info.setText(moveInfo(moves[i], defender));
         },
       },
     );
@@ -240,7 +290,22 @@ export class BattleScene extends Phaser.Scene {
     panel.destroy();
     type.destroy();
     info.destroy();
+    arrows.destroy();
     return choice === null ? null : { action: 'MOVE', moveIndex: choice };
+  }
+
+  /** Seta no fim de cada linha de golpe: para cima (verde) se for super efetivo, para baixo (cinza) se for fraco. */
+  private drawMatchupArrows(matchups: ReturnType<typeof matchup>[]): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    matchups.forEach((m, i) => {
+      if (m === 'neutral') return;
+      const x = 228;
+      const y = 112 + i * 9;
+      g.fillStyle(m === 'super' ? PALETTE[C.forest] : PALETTE[C.steel]);
+      if (m === 'super') g.fillTriangle(x, y + 4, x + 6, y + 4, x + 3, y);
+      else g.fillTriangle(x, y, x + 6, y, x + 3, y + 4);
+    });
+    return g;
   }
 
   private async chooseSwitch(): Promise<TurnAction | null> {
@@ -277,9 +342,12 @@ export class BattleScene extends Phaser.Scene {
       case 'flash':
         this.fx.hit(step.side, this.sprite(step.side));
         return tween(this, { targets: this.sprite(step.side), alpha: 0, duration: 70, yoyo: true, repeat: 2 });
-      case 'hp':
+      case 'hp': {
         this.fx.hp(step.side);
-        return this.info(step.side).setHp(step.to, true);
+        const info = this.info(step.side);
+        this.floatHpChange(step.side, hpChangeLabel(info.hp, step.to, info.maxHp));
+        return info.setHp(step.to, true);
+      }
       case 'enemySwitch':
         return this.enemySwitch(step.hp);
       case 'faint': {
@@ -299,6 +367,15 @@ export class BattleScene extends Phaser.Scene {
         return tween(this, { targets: s, y: s.y + (step.up ? -3 : 3), duration: 90, yoyo: true, repeat: 1 });
       }
     }
+  }
+
+  /** "-25%" (vermelho) ou "+10%" (verde) sobe e some acima do monstro. */
+  private floatHpChange(side: Side, label: string): void {
+    if (!label) return;
+    const s = this.sprite(side);
+    const color = label.startsWith('-') ? CSS.accent : '#38a838';
+    const t = addText(this, s.x, s.y - 22, label, { color, stroke: CSS.paper, strokeThickness: 2 }).setOrigin(0.5);
+    this.tweens.add({ targets: t, y: t.y - 12, alpha: 0, delay: 300, duration: 700, onComplete: () => t.destroy() });
   }
 
   private async switchTo(index: number, hp: number): Promise<void> {

@@ -114,7 +114,8 @@ test('battle menu fits 4 moves and info boxes show status badges', async ({ page
     `FOGO NA BABILONIA   10/10`,
     `CHURRASCO GREGO     15/15`,
     `SANGUE NOS OLHOS     0/15`,
-    'POD 40 PRE 100',
+    // FOGO contra ROCHA: pouco efetivo.
+    'POD 40 PRE 100 FRACO',
   ]));
   await page.screenshot({ path: 'test-results/screens/battle-4-moves.png' });
 
@@ -130,4 +131,44 @@ test('battle menu fits 4 moves and info boxes show status badges', async ({ page
   for (let i = 0; i < 10 && !(await battleTexts(page)).includes('QUE'); i++) await press(page, 'Enter');
   expect(await battleTexts(page)).toContain('QUE');
   await page.screenshot({ path: 'test-results/screens/battle-status-badges.png' });
+});
+
+/** Inicia a cena de batalha direto, com a batalha simulada, e espera o menu de acoes. */
+async function openBattleMenu(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.waitForFunction(() => window.__clonemon?.game.scene.isActive('Title'), null, { timeout: 20_000 });
+  await page.evaluate((b) => {
+    const game = window.__clonemon!.game;
+    game.scene.stop('Title');
+    game.scene.start('Battle', { battle: b });
+  }, battle);
+  await page.waitForFunction(() => window.__clonemon?.game.scene.isActive('Battle'));
+  await page.waitForTimeout(600);
+  for (let i = 0; i < 5 && !(await battleTexts(page)).includes('LUTAR'); i++) await press(page, 'Enter');
+}
+
+test('H opens the battle history grouped by turn and the damage floats as a percentage', async ({ page }) => {
+  await page.route(`**/api/battles/${battle.id}/turns`, (route) => route.fulfill({ json: afterTurn() }));
+  await openBattleMenu(page);
+
+  await press(page, 'h');
+  const texts = await battleTexts(page);
+  expect(texts).toContain('HISTORICO   (H FECHA)');
+  expect(texts.join('\n')).toContain(['ANTES', ' Um COISO selvagem apareceu!', ' A batalha continua!'].join('\n'));
+  await page.screenshot({ path: 'test-results/screens/battle-history.png' });
+  await press(page, 'h');
+  expect(await battleTexts(page)).toContain('LUTAR');
+
+  // LUTAR > Churrasco grego: o Coiso perde 8 de 33 de HP (24%).
+  await press(page, 'Enter');
+  await press(page, 'ArrowDown', 2);
+  await press(page, 'Enter');
+  let sawDamage = false;
+  for (let i = 0; i < 20 && !sawDamage; i++) {
+    sawDamage = (await battleTexts(page)).includes('-24%');
+    if (sawDamage) await page.screenshot({ path: 'test-results/screens/battle-damage.png' });
+    else await page.waitForTimeout(100);
+    if (i % 5 === 4) await press(page, 'Enter');
+  }
+  expect(sawDamage).toBe(true);
 });

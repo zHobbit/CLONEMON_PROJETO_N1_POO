@@ -1,4 +1,4 @@
-export type Key = 'confirm' | 'cancel' | 'up' | 'down' | 'left' | 'right';
+export type Key = 'confirm' | 'cancel' | 'up' | 'down' | 'left' | 'right' | 'history';
 export type Direction = Extract<Key, 'up' | 'down' | 'left' | 'right'>;
 
 const KEYS: Record<string, Key> = {
@@ -14,9 +14,11 @@ const KEYS: Record<string, Key> = {
   ArrowDown: 'down',
   ArrowLeft: 'left',
   ArrowRight: 'right',
+  h: 'history',
+  H: 'history',
 };
 
-/** Teclas do jogo: Enter/Espaco/Z confirmam, Esc/Backspace/X cancelam, setas navegam. */
+/** Teclas do jogo: Enter/Espaco/Z confirmam, Esc/Backspace/X cancelam, setas navegam, H abre o historico da batalha. */
 export function mapKey(key: string): Key | undefined {
   return KEYS[key];
 }

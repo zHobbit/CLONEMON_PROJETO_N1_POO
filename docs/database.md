@@ -13,6 +13,7 @@ PostgreSQL, com o schema versionado pelo Flyway em
 - `V6__world.sql`: mapa do mundo. Posição do treinador (`world_x`, `world_y`, `world_facing` em `trainer`, nulas até a primeira gravação),
   os treinadores do mapa (`npc_trainer`, `npc_team`) com a seed de CAIO, BIA e ZECA, as vitórias sobre eles (`trainer_npc_defeat`)
   e `battle.npc_id` (nulo = batalha contra selvagem).
+- `V7__rebalance_npcs.sql`: novos times de CAIO, BIA e ZECA, medidos pelo `BalanceTest`.
 
 O Hibernate roda com `ddl-auto=validate`: ele só confere se as entidades batem com o schema, nunca o altera.
 

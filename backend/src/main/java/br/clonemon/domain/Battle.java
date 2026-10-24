@@ -128,7 +128,10 @@ public class Battle {
                 Monster player = playerMonster();
                 Monster enemy = enemyMonster();
                 int enemyMove = ai.chooseMove(enemy, player);
-                if (player.effectiveSpeed() >= enemy.effectiveSpeed()) {
+                // Empate de velocidade: cara ou coroa.
+                int playerSpeed = player.effectiveSpeed();
+                int enemySpeed = enemy.effectiveSpeed();
+                if (playerSpeed > enemySpeed || (playerSpeed == enemySpeed && calc.chance(50))) {
                     act(player, enemy, m.moveIndex(), events);
                     if (!enemy.isFainted()) act(enemy, player, enemyMove, events);
                 } else {

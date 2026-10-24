@@ -132,4 +132,22 @@ class BattleTest {
         assertThatThrownBy(() -> new Battle(List.of(m), List.of(new Monster(Catalog.OLAF, 5)), calc, AiStrategy.greedy()))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    /** Mesma especie e nivel: mesma velocidade. Quem ataca primeiro gera o primeiro evento de dano. */
+    private static Battle.Effect firstHit(DamageCalculator dice) {
+        Battle b = new Battle(List.of(new Monster(Catalog.LINDOYA, 20)), List.of(new Monster(Catalog.LINDOYA, 20)),
+                dice, AiStrategy.greedy());
+        return b.submit(new Battle.UseMove(0)).stream().map(Battle.Event::effect)
+                .filter(e -> e == Battle.Effect.PLAYER_HIT || e == Battle.Effect.ENEMY_HIT).findFirst().orElseThrow();
+    }
+
+    @Test
+    void speedTieIsDecidedByTheDice() {
+        RandomGenerator lowRolls = new RandomGenerator() {
+            @Override public long nextLong() { return 0; }
+            @Override public int nextInt(int bound) { return 0; }
+        };
+        assertThat(firstHit(new DamageCalculator(lowRolls))).as("sorteio baixo: jogador primeiro").isEqualTo(Battle.Effect.ENEMY_HIT);
+        assertThat(firstHit(calc)).as("sorteio alto: oponente primeiro").isEqualTo(Battle.Effect.PLAYER_HIT);
+    }
 }

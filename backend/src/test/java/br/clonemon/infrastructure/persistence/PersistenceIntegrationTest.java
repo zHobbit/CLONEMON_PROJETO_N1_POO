@@ -6,6 +6,7 @@ import br.clonemon.application.port.BattleRepository;
 import br.clonemon.application.port.BattleRepository.StoredBattle;
 import br.clonemon.application.port.MonsterRepository;
 import br.clonemon.application.port.NpcCatalog;
+import br.clonemon.application.port.ReplayRepository;
 import br.clonemon.application.port.SpeciesCatalog;
 import br.clonemon.application.port.TrainerRepository;
 import br.clonemon.application.port.WorldRepository;
@@ -29,6 +30,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,6 +46,7 @@ class PersistenceIntegrationTest {
     @Autowired SpeciesCatalog catalog;
     @Autowired NpcCatalog npcs;
     @Autowired WorldRepository world;
+    @Autowired ReplayRepository replays;
     @Autowired JdbcTemplate jdbc;
     @Autowired TransactionTemplate tx;
 
@@ -302,5 +305,74 @@ class PersistenceIntegrationTest {
         Battle.State fled = new Battle.State(active.playerTeam(), active.enemyTeam(), 0, 0, Battle.Status.FLED, List.of("Voce fugiu!"));
         battles.save(new StoredBattle(saved.id(), trainerId, null, List.of(hero.id()), fled));
         assertThat(battles.findActiveByTrainer(trainerId)).isEmpty();
+    }
+
+    private long finishedBattle(long trainerId, OwnedMonster hero) {
+        Battle.State fled = new Battle.State(List.of(hero.monster()), List.of(new Monster(Catalog.OLAF, 5)), 0, 0,
+                Battle.Status.FLED, List.of("Voce fugiu!"));
+        return battles.save(new StoredBattle(null, trainerId, null, List.of(hero.id()), fled)).id();
+    }
+
+    private static ReplayRepository.Snapshot snapshot() {
+        return new ReplayRepository.Snapshot(
+                List.of(ReplayRepository.Combatant.of(new Monster(Catalog.GROOT, 10))),
+                List.of(ReplayRepository.Combatant.of(new Monster(Catalog.OLAF, 5))), 0, 0, null);
+    }
+
+    @Test
+    void replayRoundTripsThroughJsonb() {
+        long trainerId = newTrainer().id();
+        OwnedMonster hero = monsters.save(new OwnedMonster(null, trainerId, "h", 0, new Monster(Catalog.GROOT, 10)));
+        long battleId = finishedBattle(trainerId, hero);
+        Battle.Event e = new Battle.Event("Groot usou Cartolinada!", Battle.Effect.ENEMY_HIT, 0, 30, 10,
+                StatusCondition.NONE, StatusCondition.BURN, 0);
+
+        replays.start(battleId, trainerId, "Olaf selvagem", snapshot());
+        replays.appendTurn(battleId, new ReplayRepository.Turn(List.of(e), List.of(new ReplayRepository.Growth(11, 34))));
+        assertThat(replays.findFinished(trainerId, battleId)).as("ainda nao terminou").isEmpty();
+        replays.finish(battleId, Battle.Status.PLAYER_WON);
+
+        ReplayRepository.Replay r = replays.findFinished(trainerId, battleId).orElseThrow();
+        assertThat(r.summary().opponent()).isEqualTo("Olaf selvagem");
+        assertThat(r.summary().lead()).isEqualTo("Groot");
+        assertThat(r.summary().turnCount()).isEqualTo(1);
+        assertThat(r.summary().result()).isEqualTo(Battle.Status.PLAYER_WON);
+        assertThat(r.summary().finishedAt()).isNotNull();
+        assertThat(r.snapshot()).isEqualTo(snapshot());
+        assertThat(r.turns()).singleElement().satisfies(t -> {
+            assertThat(t.events()).containsExactly(e);
+            assertThat(t.playerTeam()).containsExactly(new ReplayRepository.Growth(11, 34));
+        });
+        assertThat(replays.findFinished(newTrainer().id(), battleId)).as("outro treinador").isEmpty();
+    }
+
+    @Test
+    void pruneKeepsTheNewestFinishedReplays() {
+        long trainerId = newTrainer().id();
+        OwnedMonster hero = monsters.save(new OwnedMonster(null, trainerId, "h", 0, new Monster(Catalog.GROOT, 10)));
+        List<Long> ids = IntStream.range(0, 4).mapToObj(i -> {
+            long id = finishedBattle(trainerId, hero);
+            replays.start(id, trainerId, "Olaf selvagem", snapshot());
+            replays.finish(id, Battle.Status.FLED);
+            return id;
+        }).toList();
+
+        replays.prune(trainerId, 2);
+
+        assertThat(replays.listFinished(trainerId, 10)).extracting(ReplayRepository.Summary::id)
+                .containsExactly(ids.get(3), ids.get(2));
+    }
+
+    @Test
+    void deletingTheBattleDeletesItsReplay() {
+        long trainerId = newTrainer().id();
+        OwnedMonster hero = monsters.save(new OwnedMonster(null, trainerId, "h", 0, new Monster(Catalog.GROOT, 10)));
+        long battleId = finishedBattle(trainerId, hero);
+        replays.start(battleId, trainerId, "Olaf selvagem", snapshot());
+        replays.finish(battleId, Battle.Status.FLED);
+
+        jdbc.update("delete from battle where id = ?", battleId);
+
+        assertThat(replays.listFinished(trainerId, 10)).isEmpty();
     }
 }

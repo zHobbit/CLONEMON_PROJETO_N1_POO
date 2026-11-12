@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "art:preview": "playwright test -c playwright.art.config.ts"
+    "art:preview": "playwright test -c playwright.art.config.ts",
+    "art:build": "node scripts/pixelize.mjs",
+    "art:sheet": "node scripts/contact-sheet.mjs"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.3.0",
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
+    "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"

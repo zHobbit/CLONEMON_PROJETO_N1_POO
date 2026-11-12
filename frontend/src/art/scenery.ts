@@ -25,15 +25,26 @@ function cloud(c: PixelCanvas, cx: number, cy: number, w: number): void {
   c.paint(shape, { tones: [C.white, C.white, C.silver], outline: C.silver });
 }
 
+/** Cores da plataforma: grama clara, grama escura (borda e tufos) e a sombra por baixo. */
+interface Turf {
+  readonly light: number;
+  readonly dark: number;
+  readonly shade: number;
+}
+
+const DAY_TURF: Turf = { light: C.green, dark: C.forest, shade: C.pine };
+/** Grama no escuro, para a plataforma nao brilhar sobre o cenario noturno. */
+export const NIGHT_TURF: Turf = { light: C.forest, dark: C.pine, shade: C.deepTeal };
+
 /** Grama com tufinhos, usada nas plataformas. */
-function platform(c: PixelCanvas, cx: number, cy: number, rx: number, ry: number): void {
-  c.paint(ellipse(cx, cy + 3, rx, ry), { tones: [C.forest], outline: C.pine }, { flat: 0 });
-  c.paint(ellipse(cx, cy, rx - 2, ry - 2), { tones: [C.green, C.green, C.forest], outline: C.forest });
+function platform(c: PixelCanvas, cx: number, cy: number, rx: number, ry: number, turf: Turf = DAY_TURF): void {
+  c.paint(ellipse(cx, cy + 3, rx, ry), { tones: [turf.dark], outline: turf.shade }, { flat: 0 });
+  c.paint(ellipse(cx, cy, rx - 2, ry - 2), { tones: [turf.light, turf.light, turf.dark], outline: turf.dark });
   for (let i = -3; i <= 3; i++) {
     const x = Math.round(cx + i * rx * 0.25);
     const y = Math.round(cy + ((i * 7) % 3) - 1);
-    c.set(x, y, C.forest);
-    c.set(x + 1, y - 1, C.forest);
+    c.set(x, y, turf.dark);
+    c.set(x + 1, y - 1, turf.dark);
   }
 }
 
@@ -41,7 +52,7 @@ export const BATTLE_BG = { width: 240, height: 112, enemy: { x: 176, y: 62 }, pl
 
 /** Fundo da batalha (acima da caixa de texto): ceu, nuvens, morros e as duas plataformas. */
 export function drawBattleBackground(): PixelCanvas {
-  const { width, height, enemy, player } = BATTLE_BG;
+  const { width, height } = BATTLE_BG;
   const c = new PixelCanvas(width, height);
   bands(c, 0, [[C.blue, 12], [C.cyan, 24], [C.white, 28]]);
   cloud(c, 40, 22, 28);
@@ -52,8 +63,18 @@ export function drawBattleBackground(): PixelCanvas {
     form: { cx: 120, cy: 60, rx: 160, ry: 30 },
   });
   bands(c, 64, [[C.green, 6], [C.forest, height - 70]]);
-  platform(c, enemy.x, enemy.y, 46, 10);
-  platform(c, player.x, player.y, 56, 12);
+  drawBattlePlatforms(c);
+  return c;
+}
+
+/**
+ * As duas plataformas onde os monstros pisam. Ficam no codigo mesmo quando o fundo vem de um PNG,
+ * para continuarem alinhadas com a posicao dos sprites.
+ */
+export function drawBattlePlatforms(c = new PixelCanvas(BATTLE_BG.width, BATTLE_BG.height), turf: Turf = DAY_TURF): PixelCanvas {
+  const { enemy, player } = BATTLE_BG;
+  platform(c, enemy.x, enemy.y, 46, 10, turf);
+  platform(c, player.x, player.y, 56, 12, turf);
   return c;
 }
 

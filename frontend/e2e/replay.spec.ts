@@ -45,7 +45,12 @@ test('a finished battle can be replayed turn by turn from the pause menu', async
   const total = (await replayView(page)).replay!.turnCount;
 
   // Pausa, pula para o fim com a seta para a direita e volta um turno.
-  await page.keyboard.press('Enter');
+  // Enter alterna: numa batalha curta o replay chega ao fim sozinho (e ja pausado) antes da tecla,
+  // e ai o Enter o recomecaria. Por isso so aperta enquanto estiver tocando.
+  for (let i = 0; i < 3 && (await replayView(page)).playing; i++) {
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(150);
+  }
   await expect.poll(async () => (await replayView(page)).playing).toBe(false);
   // Uma seta durante a animacao so acelera o turno; repete ate chegar ao fim.
   for (let i = 0; i < total + 10 && (await replayView(page)).turn < total; i++) {

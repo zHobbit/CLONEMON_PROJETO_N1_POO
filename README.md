@@ -1,5 +1,7 @@
 # 👾 CLONEMON
 
+![CLONEMON](docs/banner.png)
+
 > The best worst monster-catching clone you've ever seen, now in pixel art.
 
 Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and progress saved on the server. A full rewrite of my original console OOP project: Spring Boot + PostgreSQL on the backend and Phaser in the browser.
@@ -17,7 +19,7 @@ Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and
 |---|---|
 | Backend | `Java 21`, `Spring Boot 4` (Web MVC, Data JPA, Security with JWT), `Flyway`, `PostgreSQL` |
 | Frontend | `TypeScript`, `Vite`, `Phaser 4`, Press Start 2P font |
-| Art | Pixel art generated in code, ENDESGA 32 palette |
+| Art | Pixel art in the ENDESGA 32 palette: monsters and backdrops are PNGs, the map and UI are drawn in code |
 | Tests | `JUnit 5`, `AssertJ`, `Testcontainers`, `MockMvc`, `Vitest`, `Playwright` |
 
 ## 🚀 Features
@@ -27,6 +29,7 @@ Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and
 - **Level-up moves** - Every clonemon learns 2 new moves as it levels, some with status effects (burn, freeze, paralysis, sleep) or stat changes
 - **Recruit by winning** - Beat a wild clonemon and it joins your team (or goes to the PC if the team is full)
 - **Trainer line of sight** - Trainers on the route challenge you when you cross their view, and you can't run away
+- **Backdrops that follow the clock** - Wild battles happen in a field by day, at sunset in the late afternoon and under the moon at night; trainer battles take place in the village
 - **Battle helpers** - Super-effective / not-very-effective markers on each move, damage shown as %, and a turn-by-turn battle log
 - **Replays** - The last 20 battles, with pause, step back and forward, speed control and a mirrored view from the opponent's side
 - **Saved every turn** - Close the browser mid-battle and continue later
@@ -34,6 +37,8 @@ Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and
 ## 📍 The Process
 
 CLONEMON started as a console game for an object-oriented programming course at university (UAM, Computer Science), built with two classmates. Years later I came back to it and rewrote everything as a real web game: a Spring Boot API with JWT auth and Flyway migrations, a Phaser front end, and pixel art drawn entirely in code. The original console version still lives in [`legacy/`](legacy/) so you can compare the two.
+
+The art went through two stages. First every sprite was drawn in code, pixel by pixel, which is still how the map, the characters and the UI are made. Later I used those code-drawn monsters as references for an image model (GPT Image, through Higgsfield) and wrote a script that cuts out the background, shrinks each drawing to the 48x48 grid and snaps it to the same 32-colour palette, so the generated monsters and backdrops sit next to the hand-coded art without clashing. Any monster without a PNG still falls back to its code-drawn version.
 
 I wanted the rewrite to be tested like a production app, so the backend has domain, use case, persistence and API tests running against a real Postgres through Testcontainers, and a Playwright test plays a full match in the browser.
 
@@ -121,6 +126,18 @@ cd frontend && npm run test:e2e
 - `verify` runs the domain, use case, persistence and API tests (needs Docker) and writes coverage to `backend/target/site/jacoco/index.html`.
 - `test:e2e` plays a full match in the browser and starts the backend on its own (needs Docker). On Windows it uses the installed Edge.
 - `npm run art:preview` saves a screenshot of all the pixel art to `frontend/test-results/screens/art-gallery.png`.
+
+## 🎨 Art Pipeline
+
+The PNGs in `frontend/src/assets/` are built from high-resolution originals kept in `frontend/art-src/` (not versioned).
+
+```bash
+cd frontend && npm run art:build
+```
+
+- `art:build` runs `scripts/pixelize.mjs` over every original it finds and skips the ones that are missing, so it is safe to run with only part of the originals.
+- `npm run art:sheet` saves all the final battle sprites, enlarged, to `frontend/art-src/preview-monsters.png` for review.
+- To add art for a new monster, put its sheet (front view on the left, back view on the right) in `art-src/monsters/<name>.png` and add the name to `SHEETS` in the script.
 
 ## 🙌 Credits
 

@@ -1,8 +1,9 @@
 import type { Element } from '../api/types';
+import { ASSET_URLS, TITLE_ASSET, battleAsset, iconAsset, monsterAsset } from './assets';
 import { ELEMENT_ICON_SIZE, drawElementIcon } from './icons';
 import { ICON_SIZE, SPRITE_SIZE, drawIcon, drawMonster } from './monsters';
 import type { PixelCanvas } from './raster';
-import { BATTLE_BG, drawBattleBackground, drawMenuTile, drawTitleBackground } from './scenery';
+import { BATTLE_BG, drawBattleBackground, drawBattlePlatforms, drawMenuTile, drawTitleBackground } from './scenery';
 import { Tile, drawAllTiles, drawCenter, drawExclaim, drawHouse } from './world';
 import { CHARACTER_IDS, DIRECTIONS, type CharacterId, type Direction, drawCharacterFrame } from './worldCharacters';
 
@@ -56,6 +57,27 @@ function toCanvas(art: PixelCanvas): HTMLCanvasElement {
   return tmp;
 }
 
+/** PNGs de src/assets ja carregados; o que nao tiver PNG aparece com o desenho feito por codigo. */
+const PNGS = new Map<string, HTMLImageElement>();
+await Promise.all(
+  Object.entries(ASSET_URLS).map(async ([name, url]) => {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    PNGS.set(name, image);
+  }),
+);
+
+/** Um quadro do monstro como o jogo mostra: o segundo quadro do PNG e o primeiro achatado um pixel. */
+function monsterFrame(name: string, element: Element, view: 'front' | 'back', frame: 0 | 1): CanvasImageSource {
+  const png = PNGS.get(monsterAsset(name, view));
+  if (!png) return toCanvas(drawMonster(name, element, view, frame));
+  const tmp = document.createElement('canvas');
+  tmp.width = tmp.height = SPRITE_SIZE;
+  tmp.getContext('2d')!.drawImage(png, 0, 0, SPRITE_SIZE, SPRITE_SIZE, 0, frame, SPRITE_SIZE, SPRITE_SIZE - frame);
+  return tmp;
+}
+
 function blit(art: PixelCanvas, x: number, y: number, zoom: number): void {
   ctx.drawImage(toCanvas(art), x, y, art.width * zoom, art.height * zoom);
 }
@@ -70,17 +92,17 @@ SPECIES.forEach(([name, element], row) => {
   const y = 24 + row * CELL;
   label(name, 4, y + CELL / 2);
   const frames = [
-    drawMonster(name, element, 'front', 0), drawMonster(name, element, 'front', 1),
-    drawMonster(name, element, 'back', 0), drawMonster(name, element, 'back', 1),
+    monsterFrame(name, element, 'front', 0), monsterFrame(name, element, 'front', 1),
+    monsterFrame(name, element, 'back', 0), monsterFrame(name, element, 'back', 1),
   ];
   frames.forEach((art, i) => {
     ctx.fillStyle = i % 2 === 0 ? '#c8e8f8' : '#f8f8f0';
     ctx.fillRect(LEFT + i * CELL, y, SPRITE_SIZE * ZOOM, SPRITE_SIZE * ZOOM);
-    blit(art, LEFT + i * CELL, y, ZOOM);
+    ctx.drawImage(art, LEFT + i * CELL, y, SPRITE_SIZE * ZOOM, SPRITE_SIZE * ZOOM);
   });
   ctx.fillStyle = '#f8f8f0';
   ctx.fillRect(LEFT + 4 * CELL, y, ICON_SIZE * ZOOM * 2, ICON_SIZE * ZOOM * 2);
-  blit(drawIcon(name, element), LEFT + 4 * CELL, y, ZOOM * 2);
+  ctx.drawImage(PNGS.get(iconAsset(name)) ?? toCanvas(drawIcon(name, element)), LEFT + 4 * CELL, y, ICON_SIZE * ZOOM * 2, ICON_SIZE * ZOOM * 2);
   ctx.fillRect(LEFT + 4 * CELL + 136, y, ELEMENT_ICON_SIZE * ZOOM, ELEMENT_ICON_SIZE * ZOOM);
   blit(drawElementIcon(element), LEFT + 4 * CELL + 136, y, ZOOM);
 });
@@ -92,13 +114,19 @@ BATTLES.forEach(([[enemyName, enemyEl], [playerName, playerEl]], i) => {
   label(`batalha (x3): ${enemyName} x ${playerName}`, x, y - 8);
   const battle = toCanvas(drawBattleBackground());
   const bctx = battle.getContext('2d')!;
-  bctx.drawImage(toCanvas(drawMonster(enemyName, enemyEl, 'front', 0)), BATTLE_BG.enemy.x - 24, BATTLE_BG.enemy.y - 44);
-  bctx.drawImage(toCanvas(drawMonster(playerName, playerEl, 'back', 0)), BATTLE_BG.player.x - 24, BATTLE_BG.player.y - 44);
+  // Um cenario diferente por cena, na ordem em que existirem.
+  const backdrop = PNGS.get(battleAsset((['field', 'town', 'dusk', 'night'] as const)[i % 4]));
+  if (backdrop) {
+    bctx.drawImage(backdrop, 0, 0);
+    bctx.drawImage(toCanvas(drawBattlePlatforms()), 0, 0);
+  }
+  bctx.drawImage(monsterFrame(enemyName, enemyEl, 'front', 0), BATTLE_BG.enemy.x - 24, BATTLE_BG.enemy.y - 44);
+  bctx.drawImage(monsterFrame(playerName, playerEl, 'back', 0), BATTLE_BG.player.x - 24, BATTLE_BG.player.y - 44);
   ctx.drawImage(battle, x, y, SCENE_W, SCENE_H);
 });
 
 label('titulo (x2)', 4, sceneY - 8);
-blit(drawTitleBackground(), 4, sceneY, 2);
+ctx.drawImage(PNGS.get(TITLE_ASSET) ?? toCanvas(drawTitleBackground()), 4, sceneY, 480, 320);
 const tileX = 4 + 480 + 32;
 label('menu (x4)', tileX, sceneY - 8);
 const tile = drawMenuTile();

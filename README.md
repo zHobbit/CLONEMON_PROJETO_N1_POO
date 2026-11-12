@@ -1,5 +1,7 @@
 # 👾 CLONEMON
 
+![CLONEMON](docs/banner.png)
+
 > The best worst monster-catching clone you've ever seen, now in pixel art.
 
 Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and progress saved on the server. A full rewrite of my original console OOP project: Spring Boot + PostgreSQL on the backend and Phaser in the browser.
@@ -17,7 +19,7 @@ Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and
 |---|---|
 | Backend | `Java 21`, `Spring Boot 4` (Web MVC, Data JPA, Security with JWT), `Flyway`, `PostgreSQL` |
 | Frontend | `TypeScript`, `Vite`, `Phaser 4`, Press Start 2P font |
-| Art | Pixel art generated in code, ENDESGA 32 palette |
+| Art | Pixel art in the ENDESGA 32 palette: monsters and backdrops are PNGs, the map and UI are drawn in code |
 | Tests | `JUnit 5`, `AssertJ`, `Testcontainers`, `MockMvc`, `Vitest`, `Playwright` |
 
 ## 🚀 Features

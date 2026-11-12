@@ -2,3 +2,5 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+# Originais gerados em alta resolucao; o jogo usa so src/assets (ver scripts/pixelize.mjs).
+art-src/

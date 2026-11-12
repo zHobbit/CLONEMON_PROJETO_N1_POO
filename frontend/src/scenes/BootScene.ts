@@ -1,16 +1,20 @@
 import Phaser from 'phaser';
-import { registerArt } from '../art/textures';
+import { preloadArt, registerArt } from '../art/textures';
 import { CSS, HEIGHT, SCENES, WIDTH } from '../config';
 import { registerEffectArt } from '../fx/hitEffects';
 import { api, catalog } from '../services';
 import { addText } from '../ui/widgets';
 
-/** Carrega o catalogo de especies e gera as texturas antes de abrir o titulo. */
+/** Carrega os PNGs e o catalogo de especies e gera as texturas antes de abrir o titulo. */
 export class BootScene extends Phaser.Scene {
   private status!: Phaser.GameObjects.Text;
 
   constructor() {
     super(SCENES.boot);
+  }
+
+  preload(): void {
+    preloadArt(this);
   }
 
   create(): void {

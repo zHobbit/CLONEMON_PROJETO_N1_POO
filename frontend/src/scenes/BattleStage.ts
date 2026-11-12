@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import type { Battle, Combatant, StatusCondition, TurnEvent } from '../api/types';
 import { C, PALETTE } from '../art/palette';
 import { BATTLE_BG } from '../art/scenery';
-import { BG, addMonster, elementKey, showMonster } from '../art/textures';
+import { addMonster, battleBackground, elementKey, showMonster } from '../art/textures';
+import { pickBackdrop } from '../battle/backdrop';
 import { STATUS_BADGE } from '../battle/labels';
 import type { Side, Step } from '../battle/playback';
 import { COLORS, CSS, WIDTH } from '../config';
@@ -125,7 +126,7 @@ export class BattleStage {
   constructor(private readonly scene: Phaser.Scene, battle: Battle) {
     this.fx = new BattleFx(scene);
     this.battle = battle;
-    scene.add.image(0, 0, BG.battle).setOrigin(0);
+    scene.add.image(0, 0, battleBackground(scene, pickBackdrop(battle.npcId, new Date().getHours()))).setOrigin(0);
     this.sprites = {
       far: addMonster(scene, SLOTS.far.x, SLOTS.far.y, battle.enemy.speciesId, 'front'),
       near: addMonster(scene, SLOTS.near.x, SLOTS.near.y, lead(battle).speciesId, 'back'),

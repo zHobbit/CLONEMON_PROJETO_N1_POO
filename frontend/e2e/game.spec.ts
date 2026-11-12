@@ -135,3 +135,20 @@ test('wrong password shows an error on the login form', async ({ page }) => {
   await expect(page.locator('#login-error')).toHaveText('Treinador ou senha invalidos.');
   expect(await isActive(page, 'Login')).toBe(true);
 });
+
+test('an expired token still loads the art and only then asks to log in again', async ({ page }) => {
+  // Com token vencido o servidor responde 401 ate no catalogo publico. Antes isso tirava o jogo do
+  // Boot direto para o login, sem registrar a arte: depois de entrar, tudo aparecia como textura faltando.
+  await page.addInitScript(() => localStorage.setItem('clonemon.token', 'token.vencido.aqui'));
+  await page.goto('/');
+  await waitForScene(page, 'Title');
+  const missing = await page.evaluate(() => {
+    const textures = window.__clonemon!.game.textures;
+    return ['mon-front-1', 'mon-back-1', 'icon-1', 'el-AGUA', 'bg-battle', 'bg-title'].filter((key) => !textures.exists(key));
+  });
+  expect(missing).toEqual([]);
+
+  // O token so e recusado quando o jogo pede algo que precisa dele.
+  await page.keyboard.press('Enter');
+  await waitForScene(page, 'Login');
+});

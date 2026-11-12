@@ -100,8 +100,12 @@ export class ApiClient {
     this.tokens.set(null);
   }
 
+  /**
+   * Catalogo publico, pedido no Boot antes de qualquer tela. Vai sem o token: com um token vencido o
+   * servidor responde 401 ate aqui, o que mandava o jogo para o login sem a arte registrada.
+   */
   species(): Promise<Species[]> {
-    return this.request('GET', '/species');
+    return this.request('GET', '/species', undefined, {}, false);
   }
 
   roster(): Promise<Roster> {
@@ -158,8 +162,8 @@ export class ApiClient {
     return this.request('GET', `/replays/${id}`);
   }
 
-  private async request<T>(method: string, path: string, body?: unknown, extra: RequestInit = {}): Promise<T> {
-    const token = this.tokens.get();
+  private async request<T>(method: string, path: string, body?: unknown, extra: RequestInit = {}, authenticated = true): Promise<T> {
+    const token = authenticated ? this.tokens.get() : null;
     const headers: Record<string, string> = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;

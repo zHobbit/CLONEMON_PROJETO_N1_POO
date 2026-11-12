@@ -42,6 +42,16 @@ describe('ApiClient', () => {
     expect(fetchFn.mock.calls[0][1]?.headers).toEqual({});
   });
 
+  it('asks for the public species catalog without the saved token', async () => {
+    // Com um token vencido o servidor responde 401 ate nas rotas publicas, e isso derrubava o Boot
+    // antes de a arte ser registrada.
+    const { client, fetchFn, store, onUnauthorized } = setup('expired', json(200, []));
+    await client.species();
+    expect(fetchFn.mock.calls[0][1]?.headers).toEqual({});
+    expect(store.get()).toBe('expired');
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
   it('clears an expired token and notifies on 401', async () => {
     const { client, store, onUnauthorized } = setup('expired', json(401, { detail: 'expired' }));
     await expect(client.roster()).rejects.toBeInstanceOf(ApiError);

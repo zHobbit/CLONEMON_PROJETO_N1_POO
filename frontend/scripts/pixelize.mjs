@@ -1,5 +1,7 @@
-// Converte a arte gerada em alta resolucao (art-src/) para os PNGs do jogo (src/assets/):
-// reduz para a grade de pixels, limita as cores a paleta ENDESGA 32 e, nos sprites, recorta o fundo.
+// Converte a arte gerada em alta resolucao (art-src/) para os PNGs do jogo (src/assets/), em duas versoes:
+// - pixel: reduz para a grade de pixels e limita as cores a paleta ENDESGA 32 (galeria e reserva);
+// - HD (src/assets/hd): so recorta e reduz, mantendo o desenho e as cores (usada na batalha e no titulo).
+// Nos sprites, as duas versoes recortam o fundo do mesmo jeito.
 //
 //   node scripts/pixelize.mjs            processa tudo o que esta em MANIFEST
 //   node scripts/pixelize.mjs lucifer    so as entradas cujo nome contem "lucifer"
@@ -29,6 +31,11 @@ const ICON_PAD = 1;
 const SPRITE_PAD = 2;
 const OUTLINE = [0x18, 0x14, 0x25];
 
+/** Arte HD: 8 vezes o quadro de 48 (e o icone de 16), e os cenarios 6 vezes a tela de 240x160. */
+const HD_SPRITE = 384;
+const HD_ICON = 128;
+const HD_SCENE_SCALE = 6;
+
 /**
  * A mesma imagem do Lucifer com o fundo original. O recorte pronto perdeu a chama e o recorte
  * daqui perde os pes; somando os dois (opcao 'union') o desenho fica inteiro.
@@ -54,6 +61,22 @@ const MANIFEST = [
   ]),
   ...['field', 'dusk', 'night', 'town'].map((name) => ({ kind: 'scene', src: `battle/${name}.png`, out: `battle/${name}.png`, width: 240, height: 112 })),
   { kind: 'scene', src: 'title.png', out: 'title.png', width: 240, height: 160 },
+];
+
+/** As mesmas entradas em HD, em WebP (o PNG desse tamanho pesaria ~9 MB): kind 'hd' (sprite) e 'hd-scene' (cenario). */
+const webp = (path) => path.replace(/.png$/, '.webp');
+/** Qualidade do WebP: acima de 90 o arquivo cresce sem diferenca visivel nesses desenhos. */
+const WEBP = { quality: 90, alphaQuality: 100, effort: 6 };
+
+const HD = [
+  ...MANIFEST.filter((e) => e.kind === 'sprite').map((e) => ({ ...e, kind: 'hd', out: `hd/${webp(e.out)}`, size: e.size === ICON ? HD_ICON : HD_SPRITE })),
+  ...MANIFEST.filter((e) => e.kind === 'scene').map((e) => ({
+    ...e,
+    kind: 'hd-scene',
+    out: `hd/${webp(e.out)}`,
+    width: e.width * HD_SCENE_SCALE,
+    height: e.height * HD_SCENE_SCALE,
+  })),
 ];
 
 /** Cor da paleta mais proxima, com peso maior no verde (a que o olho mais distingue). */
@@ -345,10 +368,8 @@ function shadeLightEdges(data, width, height) {
   for (const i of edge) [data[i], data[i + 1], data[i + 2]] = [0x8b, 0x9b, 0xb4];
 }
 
-async function sprite(entry) {
-  const size = entry.size ?? SPRITE;
-  const pad = entry.pad ?? SPRITE_PAD;
-  const inner = size - pad * 2;
+/** Recorta o fundo (e, numa folha, a outra vista) e devolve so a area usada, em RGBA. */
+async function cutOut(entry) {
   const full = await sharp(resolve(SRC, entry.src)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   keyOut(full.data, full.info.width, full.info.height);
   if (entry.union) {
@@ -358,11 +379,18 @@ async function sprite(entry) {
     for (let i = 0; i < other.length; i += 4) if (full.data[i + 3] === 0 && other[i + 3] > 0) full.data.set(other.subarray(i, i + 4), i);
   }
   if (entry.side) keepSide(full.data, full.info.width, full.info.height, entry.side);
-  // Recorta a area usada, encaixa no quadro e apoia o monstro na base (os pes ficam na mesma linha).
-  const trimmed = await sharp(full.data, { raw: { width: full.info.width, height: full.info.height, channels: 4 } })
+  return sharp(full.data, { raw: { width: full.info.width, height: full.info.height, channels: 4 } })
     .trim({ threshold: 10 })
     .raw()
     .toBuffer({ resolveWithObject: true });
+}
+
+async function sprite(entry) {
+  const size = entry.size ?? SPRITE;
+  const pad = entry.pad ?? SPRITE_PAD;
+  const inner = size - pad * 2;
+  // Encaixa no quadro e apoia o monstro na base (os pes ficam na mesma linha).
+  const trimmed = await cutOut(entry);
   const ratio = Math.min(inner / trimmed.info.width, inner / trimmed.info.height);
   const width = Math.max(1, Math.round(trimmed.info.width * ratio));
   const height = Math.max(1, Math.round(trimmed.info.height * ratio));
@@ -380,6 +408,31 @@ async function sprite(entry) {
     .png();
 }
 
+/** Sprite HD: o recorte reduzido com suavizacao, na mesma posicao relativa do sprite de 48. */
+async function hdSprite(entry) {
+  const size = entry.size;
+  const pad = Math.round((size * SPRITE_PAD) / SPRITE);
+  const inner = size - pad * 2;
+  const trimmed = await cutOut(entry);
+  const resized = await sharp(trimmed.data, { raw: { width: trimmed.info.width, height: trimmed.info.height, channels: 4 } })
+    .resize(inner, inner, { fit: 'inside', kernel: 'lanczos3' })
+    .png()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height } = resized.info;
+  return sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: resized.data, left: Math.floor((size - width) / 2), top: size - pad - height }])
+    .webp(WEBP);
+}
+
+async function hdScene(entry) {
+  return sharp(resolve(SRC, entry.src))
+    .removeAlpha()
+    .resize(entry.width, entry.height, { fit: 'cover', position: entry.position ?? 'centre', kernel: 'lanczos3' })
+    .webp(WEBP);
+}
+
+const STAGES = { sprite, scene, hd: hdSprite, 'hd-scene': hdScene };
+
 async function scene(entry) {
   const { data, info } = await sharp(resolve(SRC, entry.src))
     .removeAlpha()
@@ -392,7 +445,7 @@ async function scene(entry) {
 }
 
 const filter = process.argv[2];
-for (const entry of MANIFEST) {
+for (const entry of [...MANIFEST, ...HD]) {
   if (filter && !entry.out.includes(filter)) continue;
   if (!existsSync(resolve(SRC, entry.src))) {
     console.log(`falta  ${entry.src}`);
@@ -400,7 +453,7 @@ for (const entry of MANIFEST) {
   }
   const target = resolve(OUT, entry.out);
   await mkdir(dirname(target), { recursive: true });
-  const image = entry.kind === 'sprite' ? await sprite(entry) : await scene(entry);
+  const image = await STAGES[entry.kind](entry);
   await image.toFile(target);
-  console.log(`${entry.kind.padEnd(6)} ${entry.out}`);
+  console.log(`${entry.kind.padEnd(8)} ${entry.out}`);
 }

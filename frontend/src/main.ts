@@ -14,11 +14,7 @@ import { TeamScene } from './scenes/TeamScene';
 import { TitleScene } from './scenes/TitleScene';
 import { WorldScene } from './scenes/WorldScene';
 import { api } from './services';
-
-/** Maior fator inteiro que cabe na janela: pixels sempre do mesmo tamanho. */
-function integerZoom(): number {
-  return Math.max(1, Math.floor(Math.min(window.innerWidth / WIDTH, window.innerHeight / HEIGHT)));
-}
+import { installViewZoom, viewZoom } from './view';
 
 async function start(): Promise<void> {
   // O jogo carregou, entao nao foi aberto direto do disco: some com o aviso do index.html.
@@ -32,17 +28,18 @@ async function start(): Promise<void> {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'game',
-    width: WIDTH,
-    height: HEIGHT,
+    // O canvas tem o tamanho real da tela; as cenas seguem em 240x160 com a camera ampliada (ver view.ts).
+    width: WIDTH * viewZoom(),
+    height: HEIGHT * viewZoom(),
     pixelArt: true,
     backgroundColor: COLORS.page,
-    scale: { mode: Phaser.Scale.NONE, zoom: integerZoom() },
+    scale: { mode: Phaser.Scale.NONE },
     scene: [BootScene, TitleScene, LoginScene, StarterScene, WorldScene, TeamScene, BattleScene, ReplayListScene, ReplayScene],
     // Musica e efeitos vem do motor proprio (src/audio); o som do Phaser criaria outro AudioContext a toa.
     audio: { noAudio: true },
   });
 
-  window.addEventListener('resize', () => game.scale.setZoom(integerZoom()));
+  installViewZoom(game);
   installAudio(game);
   installTransitions(game);
 

@@ -19,7 +19,7 @@ Turn-based battles against wild clonemons, a team of up to 6, XP and levels, and
 |---|---|
 | Backend | `Java 21`, `Spring Boot 4` (Web MVC, Data JPA, Security with JWT), `Flyway`, `PostgreSQL` |
 | Frontend | `TypeScript`, `Vite`, `Phaser 4`, Press Start 2P font |
-| Art | Pixel art in the ENDESGA 32 palette: monsters and backdrops are PNGs, the map and UI are drawn in code |
+| Art | High-resolution monsters, backdrops and title screen (WebP); map, characters and UI are pixel art drawn in code in the ENDESGA 32 palette |
 | Tests | `JUnit 5`, `AssertJ`, `Testcontainers`, `MockMvc`, `Vitest`, `Playwright` |
 
 ## 🚀 Features
@@ -129,7 +129,9 @@ cd frontend && npm run test:e2e
 
 ## 🎨 Art Pipeline
 
-The PNGs in `frontend/src/assets/` are built from high-resolution originals kept in `frontend/art-src/` (not versioned).
+The game is laid out on a 240x160 grid, but the canvas is as large as the window allows (a whole multiple of that grid). The map, the menus and the text are pixel art scaled up, while battles, the title screen and the team icons use high-resolution art that fills the real pixels.
+
+Everything in `frontend/src/assets/` is built from high-resolution originals kept in `frontend/art-src/` (not versioned). Each original yields two versions: the high-resolution one in `assets/hd/`, which the game uses, and a 48x48 pixel-art one, kept as a fallback and shown in the art gallery.
 
 ```bash
 cd frontend && npm run art:build

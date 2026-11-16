@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BG, addMonster } from '../art/textures';
+import { BG, addArt, addMonster } from '../art/textures';
 import { audio } from '../audio';
 import { CSS, HEIGHT, SCENES, WIDTH } from '../config';
 import { fadeTo } from '../fx/transitions';
@@ -14,10 +14,12 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.add.image(0, 0, BG.title).setOrigin(0);
+    addArt(this, 0, 0, BG.title).setOrigin(0);
     addText(this, WIDTH / 2 + 2, 32, 'CLONEMON', { fontSize: '24px', color: CSS.ink }).setOrigin(0.5);
     addText(this, WIDTH / 2, 30, 'CLONEMON', { fontSize: '24px', color: CSS.accent }).setOrigin(0.5);
-    addText(this, WIDTH / 2, 54, 'O MELHOR PIOR CLONE', { color: CSS.paper }).setOrigin(0.5);
+    // Contorno escuro: o fundo e claro (ceu e grama) e o texto branco sumiria nele.
+    const outlined = { color: CSS.paper, stroke: CSS.ink, strokeThickness: 2 };
+    addText(this, WIDTH / 2, 54, 'O MELHOR PIOR CLONE', outlined).setOrigin(0.5);
 
     // Em zigue-zague para os sprites de 48px caberem lado a lado.
     const species = catalog.starters();
@@ -26,7 +28,7 @@ export class TitleScene extends Phaser.Scene {
       addMonster(this, x, i % 2 === 0 ? 98 : 110, s.id, 'front');
     });
 
-    const prompt = addText(this, WIDTH / 2, HEIGHT - 12, 'PRESSIONE ENTER', { color: CSS.paper }).setOrigin(0.5);
+    const prompt = addText(this, WIDTH / 2, HEIGHT - 12, 'PRESSIONE ENTER', outlined).setOrigin(0.5);
     this.tweens.add({ targets: prompt, alpha: 0, duration: 500, yoyo: true, repeat: -1 });
     void this.waitStart(prompt);
   }

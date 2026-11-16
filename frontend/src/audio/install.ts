@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { drawMuteIcon } from '../art/effects';
 import { SCENES } from '../config';
+import { viewZoom } from '../view';
 import { onSceneCreate } from '../fx/transitions';
 import { audio } from './index';
 import type { Track } from './songs';
@@ -36,7 +37,7 @@ function muteIndicator(game: Phaser.Game): (muted: boolean) => void {
   parent.append(canvas);
 
   const layout = () => {
-    const zoom = game.scale.zoom || 1;
+    const zoom = viewZoom();
     canvas.style.width = `${icon.width * zoom}px`;
     canvas.style.height = `${icon.height * zoom}px`;
     canvas.style.top = canvas.style.right = `${2 * zoom}px`;

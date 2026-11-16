@@ -13,7 +13,7 @@ import {
   walkAnimKey,
 } from '../art/worldTextures';
 import { audio } from '../audio';
-import { SCENES, WIDTH } from '../config';
+import { HEIGHT, SCENES, WIDTH } from '../config';
 import { FADE_MS, battleTransition, fadeTo } from '../fx/transitions';
 import { api } from '../services';
 import { Menu } from '../ui/Menu';
@@ -157,6 +157,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number): void {
+    this.followPlayer();
     if (!this.position) return;
     if (this.walk) {
       this.advance(time, delta);
@@ -184,7 +185,6 @@ export class WorldScene extends Phaser.Scene {
   // ---------------------------------------------------------------- montagem
 
   private drawMap(): void {
-    const { width, height } = this.map;
     const tm = this.make.tilemap({
       data: this.map.terrain.map((row) => row.map((t) => TILE_OF[t])),
       tileWidth: TILE_SIZE,
@@ -192,8 +192,11 @@ export class WorldScene extends Phaser.Scene {
     });
     const tiles = tm.addTilesetImage(WORLD_TEXTURES.tiles, WORLD_TEXTURES.tiles, TILE_SIZE, TILE_SIZE, 0, 0);
     if (!tiles) throw new Error('Textura dos ladrilhos ausente');
-    tm.createLayer(0, tiles, 0, 0)?.setDepth(-1);
+    const ground = tm.createLayer(0, tiles, 0, 0)?.setDepth(-1);
     this.front = (tm.createBlankLayer('front', tiles, 0, 0) as Phaser.Tilemaps.TilemapLayer).setDepth(FRONT_DEPTH);
+    // O recorte de ladrilhos fora da tela calcula a area visivel supondo a camera ampliada em volta do
+    // centro; a nossa amplia a partir do canto (ver view.ts) e ele esconderia o mapa. O mapa e pequeno.
+    for (const layer of [ground, this.front]) if (layer instanceof Phaser.Tilemaps.TilemapLayer) layer.skipCull = true;
 
     for (const b of this.map.buildings) {
       const key = b.kind === 'center' ? WORLD_TEXTURES.center : WORLD_TEXTURES.house;
@@ -201,7 +204,7 @@ export class WorldScene extends Phaser.Scene {
       const bottom = (b.y + BUILDING_SHAPE[b.kind].h) * TILE_SIZE;
       this.add.image(b.x * TILE_SIZE, b.y * TILE_SIZE, key).setOrigin(0).setDepth(bottom - 1);
     }
-    this.cameras.main.setBounds(0, 0, width * TILE_SIZE, height * TILE_SIZE).setRoundPixels(true);
+    this.cameras.main.setRoundPixels(true);
   }
 
   private async loadWorld(data: WorldData): Promise<void> {
@@ -226,7 +229,7 @@ export class WorldScene extends Phaser.Scene {
     // Posicao invalida (mapa mudou, dado velho): volta ao ponto de partida.
     if (!canEnter(this.map, start, this.occupied())) start = this.map.spawn;
     this.player = { id: 'player', ...start, sprite: this.addCharacter('player', start) };
-    this.cameras.main.startFollow(this.player.sprite, true, 1, 1, 0, TILE_SIZE / 2);
+    this.followPlayer();
     this.track();
     this.setGrassFront([start]);
 
@@ -355,6 +358,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   /** Atualiza a posicao exposta e a da sessao. */
+  /**
+   * Centraliza a camera no jogador sem passar da borda do mapa. Feito aqui e nao com startFollow,
+   * porque o follow do Phaser supoe a camera ampliada em volta do centro, e a nossa amplia a partir
+   * do canto (ver view.ts).
+   */
+  private followPlayer(): void {
+    const sprite = this.player?.sprite;
+    if (!sprite) return;
+    const maxX = Math.max(0, this.map.width * TILE_SIZE - WIDTH);
+    const maxY = Math.max(0, this.map.height * TILE_SIZE - HEIGHT);
+    const x = Phaser.Math.Clamp(Math.round(sprite.x - WIDTH / 2), 0, maxX);
+    const y = Phaser.Math.Clamp(Math.round(sprite.y - TILE_SIZE / 2 - HEIGHT / 2), 0, maxY);
+    this.cameras.main.setScroll(x, y);
+  }
+
   private track(): void {
     const { x, y, facing } = this.player;
     this.position = { x, y, facing };

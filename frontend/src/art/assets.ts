@@ -5,11 +5,11 @@ import type { View } from './monsters';
  * Arte em PNG (src/assets), gerada fora do jogo e convertida por scripts/pixelize.mjs.
  * Quem nao tem PNG continua sendo desenhado por codigo, entao nada aqui e obrigatorio.
  */
-const FILES = import.meta.glob<string>('../assets/**/*.png', { eager: true, query: '?url', import: 'default' });
+const FILES = import.meta.glob<string>('../assets/**/*.{png,webp}', { eager: true, query: '?url', import: 'default' });
 
 /** Caminho sem a pasta e sem a extensao: '../assets/battle/field.png' vira 'battle/field'. */
 export function assetName(path: string): string {
-  return path.replace(/^.*\/assets\//, '').replace(/\.png$/, '');
+  return path.replace(/^.*\/assets\//, '').replace(/\.(png|webp)$/, '');
 }
 
 /** Nome do asset para a URL que o Vite gerou. */
@@ -35,3 +35,8 @@ export function battleAsset(backdrop: Backdrop): string {
 }
 
 export const TITLE_ASSET = 'title';
+
+/** A versao HD de um asset (src/assets/hd), usada na batalha, no titulo e nas listas do time. */
+export function hdAsset(name: string): string {
+  return `hd/${name}`;
+}

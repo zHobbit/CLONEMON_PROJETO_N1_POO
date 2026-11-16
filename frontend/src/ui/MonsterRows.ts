@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { Monster } from '../api/types';
-import { iconKey } from '../art/textures';
+import { addArt, iconKey } from '../art/textures';
 import { COLORS, CSS } from '../config';
 import { drawHpBar } from './HpBar';
 import { addText } from './widgets';
@@ -32,7 +32,7 @@ export class MonsterRows {
       }
       const fainted = m.currentHp === 0;
       this.container.add([
-        this.scene.add.image(this.x + 8, top + 6, iconKey(m.speciesId)).setAlpha(fainted ? 0.4 : 1),
+        addArt(this.scene, this.x + 8, top + 6, iconKey(m.speciesId)).setAlpha(fainted ? 0.4 : 1),
         addText(this.scene, this.x + 18, top, m.nickname.toUpperCase(), { color: fainted ? CSS.muted : CSS.ink }),
         addText(this.scene, this.x + this.width - 2, top, `${opts.tag?.(m) ?? ''}Nv${m.level}`).setOrigin(1, 0),
       ]);
